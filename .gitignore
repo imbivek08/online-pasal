@@ -1,0 +1,52 @@
+# Go build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.o
+*.a
+
+# Build directories
+bin/
+build/
+dist/
+target/
+
+# Coverage
+*.coverprofile
+*.cov
+coverage.*
+
+# Logs
+*.log
+
+# Dependency management
+vendor/          # remove if you intentionally vendor deps
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Environment files (keep examples tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+.envrc
+
+# Docker (optional local overrides)
+docker-compose.override.yml
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*~
+*.sublime-workspace
+*.sublime-project
+
+# OS-specific
+.DS_Store
+Thumbs.db
