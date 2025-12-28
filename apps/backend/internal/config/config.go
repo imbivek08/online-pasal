@@ -15,6 +15,9 @@ type Config struct {
 	Password    string
 	MaxOpenConn int8
 	MaxIdleConn int8
+
+	// Server configuration
+	ServerPort string
 }
 
 func (s *Config) LoadEnv() (*Config, error) {
@@ -22,6 +25,12 @@ func (s *Config) LoadEnv() (*Config, error) {
 	if password == "" {
 		return nil, fmt.Errorf("password is required")
 	}
+
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080" // default port
+	}
+
 	return &Config{
 		Host:        os.Getenv("HOST"),
 		Username:    os.Getenv("USERNAME"),
@@ -31,6 +40,7 @@ func (s *Config) LoadEnv() (*Config, error) {
 		SSLMode:     os.Getenv("SSL_MODE"),
 		MaxOpenConn: 8,
 		MaxIdleConn: 5,
+		ServerPort:  serverPort,
 	}, nil
 }
 
