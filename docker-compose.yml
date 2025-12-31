@@ -1,0 +1,27 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nepify-postgres
+    environment:
+      POSTGRES_USER: nepify
+      POSTGRES_PASSWORD: nepify_password
+      POSTGRES_DB: nepify_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nepify -d nepify_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nepify-network
+
+volumes:
+  postgres_data:
+
+networks:
+  nepify-network:
+    driver: bridge

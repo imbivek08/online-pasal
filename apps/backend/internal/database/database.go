@@ -7,6 +7,7 @@ import (
 
 	"github.com/imbivek08/hamropasal/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver for database/sql
 )
 
 type Database struct {

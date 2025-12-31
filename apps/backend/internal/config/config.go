@@ -45,6 +45,6 @@ func (s *Config) LoadEnv() (*Config, error) {
 }
 
 func (s *Config) BuildDSN(config *Config) (string, error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode%s", config.Host, config.Username, config.Password, config.DBName, config.Port, config.SSLMode)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s", config.Host, config.Username, config.Password, config.DBName, config.Port, config.SSLMode)
 	return dsn, nil
 }
