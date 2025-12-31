@@ -211,12 +211,12 @@ CREATE INDEX idx_shops_vendor_id ON shops(vendor_id);
 CREATE INDEX idx_shops_slug ON shops(slug);
 CREATE INDEX idx_shops_is_active ON shops(is_active);
 CREATE INDEX idx_shops_is_verified ON shops(is_verified);
-shop_id ON products(shop
+
 CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_categories_parent_id ON categories(parent_id);
 CREATE INDEX idx_categories_is_active ON categories(is_active);
 
-CREATE INDEX idx_products_vendor_id ON products(vendor_id);
+CREATE INDEX idx_products_shop_id ON products(shop_id);
 CREATE INDEX idx_products_category_id ON products(category_id);
 CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_products_sku ON products(sku);
@@ -231,12 +231,12 @@ CREATE INDEX idx_addresses_user_id ON addresses(user_id);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
 CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_paymeshop_id ON order_items(shoptus);
+CREATE INDEX idx_orders_payment_status ON orders(payment_status);
 CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
-CREATE INDEX idx_order_items_vendor_id ON order_items(vendor_id);
+CREATE INDEX idx_order_items_shop_id ON order_items(shop_id);
 
 CREATE INDEX idx_reviews_product_id ON reviews(product_id);
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
