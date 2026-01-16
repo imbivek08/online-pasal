@@ -39,7 +39,7 @@ func (s *Server) Start() error {
 	s.setupMiddleware()
 
 	// Setup routes
-	router.SetupRoutes(s.echo, s.db)
+	router.SetupRoutes(s.echo, s.db, s.config)
 
 	// Start server with graceful shutdown
 	return s.startWithGracefulShutdown()

@@ -18,6 +18,11 @@ type Config struct {
 
 	// Server configuration
 	ServerPort string
+
+	// Clerk configuration
+	ClerkSecretKey      string
+	ClerkPublishableKey string
+	ClerkWebhookSecret  string
 }
 
 func (s *Config) LoadEnv() (*Config, error) {
@@ -32,15 +37,18 @@ func (s *Config) LoadEnv() (*Config, error) {
 	}
 
 	return &Config{
-		Host:        os.Getenv("HOST"),
-		Username:    os.Getenv("USERNAME"),
-		Port:        os.Getenv("PORT"),
-		DBName:      os.Getenv("DB_NAME"),
-		Password:    password,
-		SSLMode:     os.Getenv("SSL_MODE"),
-		MaxOpenConn: 8,
-		MaxIdleConn: 5,
-		ServerPort:  serverPort,
+		Host:                os.Getenv("HOST"),
+		Username:            os.Getenv("USERNAME"),
+		Port:                os.Getenv("PORT"),
+		DBName:              os.Getenv("DB_NAME"),
+		Password:            password,
+		SSLMode:             os.Getenv("SSL_MODE"),
+		MaxOpenConn:         8,
+		MaxIdleConn:         5,
+		ServerPort:          serverPort,
+		ClerkSecretKey:      os.Getenv("CLERK_SECRET_KEY"),
+		ClerkPublishableKey: os.Getenv("CLERK_PUBLISHABLE_KEY"),
+		ClerkWebhookSecret:  os.Getenv("CLERK_WEBHOOK_SECRET"),
 	}, nil
 }
 
