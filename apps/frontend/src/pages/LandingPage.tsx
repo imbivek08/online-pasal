@@ -1,7 +1,32 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import ProductCard from '../components/ProductCard';
+import { api, type Product } from '../lib/api';
 
 export default function LandingPage() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getProducts();
+      if (response.success && response.data) {
+        // Get first 4 products as featured
+        setFeaturedProducts(response.data.slice(0, 4));
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-secondary to-purple-900">
       <Navbar />
@@ -31,6 +56,49 @@ export default function LandingPage() {
               Browse Products
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Featured Products Section */}
+      <div className="bg-gray-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              Featured Products
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 mb-6">
+              Check out our handpicked selection of amazing products
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+              <div className="text-center">
+                <Link
+                  to="/products"
+                  className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                >
+                  View All Products
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No products available yet</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,0 +1,106 @@
+import { Link } from 'react-router-dom';
+import type { Product } from '../lib/api';
+
+interface ProductCardProps {
+  product: Product;
+}
+
+export default function ProductCard({ product }: ProductCardProps) {
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-NP', {
+      style: 'currency',
+      currency: 'NPR',
+      minimumFractionDigits: 2,
+    }).format(price);
+  };
+
+  return (
+    <Link
+      to={`/products/${product.id}`}
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden hover:-translate-y-1"
+    >
+      {/* Product Image */}
+      <div className="relative aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 overflow-hidden">
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            onError={(e) => {
+              // Fallback if image fails to load
+              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect width="400" height="400" fill="%23f3f4f6"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="48" fill="%239ca3af"%3ENo Image%3C/text%3E%3C/svg%3E';
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <svg
+              className="w-24 h-24 text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        )}
+        
+        {/* Stock Badge */}
+        {product.stock_quantity <= 5 && product.stock_quantity > 0 && (
+          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            Only {product.stock_quantity} left
+          </div>
+        )}
+        {product.stock_quantity === 0 && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            Out of Stock
+          </div>
+        )}
+      </div>
+
+      {/* Product Info */}
+      <div className="p-4">
+        <h3 className="font-semibold text-base text-gray-900 mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+          {product.name}
+        </h3>
+        
+        {product.description && (
+          <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+            {product.description}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between mt-3">
+          <div>
+            <div className="text-lg font-bold text-primary">
+              {formatPrice(product.price)}
+            </div>
+            <div className="text-xs text-gray-500 mt-0.5">
+              {product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Unavailable'}
+            </div>
+          </div>
+          
+          <button
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+              product.stock_quantity > 0
+                ? 'bg-primary text-white hover:bg-primary/90 hover:shadow-md'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+            disabled={product.stock_quantity === 0}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent navigation when clicking the button
+              // TODO: Add to cart functionality
+              console.log('Add to cart:', product.id);
+            }}
+          >
+            {product.stock_quantity > 0 ? 'Add' : 'Out'}
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+}

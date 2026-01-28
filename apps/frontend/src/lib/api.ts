@@ -18,6 +18,20 @@ export interface User {
   last_login_at?: string;
 }
 
+export interface Product {
+  id: string;
+  shop_id: string;
+  category_id?: string;
+  name: string;
+  description?: string;
+  price: number;
+  stock_quantity: number;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -91,6 +105,15 @@ class ApiClient {
 
   async getUserById(id: string): Promise<ApiResponse<User>> {
     return this.request(`/api/v1/users/${id}`);
+  }
+
+  // Product endpoints
+  async getProducts(): Promise<ApiResponse<Product[]>> {
+    return this.request('/api/v1/products');
+  }
+
+  async getProductById(id: string): Promise<ApiResponse<Product>> {
+    return this.request(`/api/v1/products/${id}`);
   }
 }
 
