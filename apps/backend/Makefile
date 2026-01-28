@@ -1,4 +1,4 @@
-.PHONY: help run build dev migrate-up migrate-down migrate-status migrate-create docker-up docker-down docker-restart clean install test
+.PHONY: help run build dev migrate-up migrate-down migrate-status migrate-create seed docker-up docker-down docker-restart clean install test
 
 # Load environment variables
 ifneq (,$(wildcard .env))
@@ -73,6 +73,10 @@ migrate-create: ## Create a new migration (usage: make migrate-create name=migra
 	fi
 	@echo "Creating migration: $(name)"
 	goose -dir ./internal/database/migrations/ create $(name) sql
+
+seed: ## Load seed data into database
+	@echo "Loading seed data..."
+	@./seed.sh
 
 clean: ## Clean build artifacts
 	@echo "Cleaning build artifacts..."

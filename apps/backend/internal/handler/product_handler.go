@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ func NewProductHandler(productService *service.ProductService, userService *serv
 // GetProducts retrieves all products (public)
 func (h *ProductHandler) GetProducts(c echo.Context) error {
 	products, err := h.productService.GetAllProducts(c.Request().Context(), nil)
+	fmt.Println("this end point was hitted")
 	if err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to retrieve products")
 	}

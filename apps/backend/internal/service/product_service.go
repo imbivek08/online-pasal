@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,6 +50,7 @@ func (s *ProductService) GetProductByID(ctx context.Context, id uuid.UUID) (*mod
 
 // GetAllProducts retrieves all products
 func (s *ProductService) GetAllProducts(ctx context.Context, filters map[string]interface{}) ([]*model.Product, error) {
+	fmt.Println("we are in servie logs of products")
 	return s.repo.GetAll(ctx, filters)
 }
 

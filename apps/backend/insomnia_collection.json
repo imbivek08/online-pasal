@@ -1,0 +1,255 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-01-17T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_health_check",
+      "name": "Health Check",
+      "description": "Check if the server is running",
+      "url": "{{ _.base_url }}/health",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_get_all_products",
+      "name": "Get All Products",
+      "description": "Get all products (public endpoint)",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_search_products",
+      "name": "Search Products",
+      "description": "Search products by keyword",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "search",
+          "value": "laptop"
+        }
+      ],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_filter_products_category",
+      "name": "Filter Products by Category",
+      "description": "Filter products by category slug",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "category",
+          "value": "electronics"
+        }
+      ],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_filter_products_featured",
+      "name": "Get Featured Products",
+      "description": "Get only featured products",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "is_featured",
+          "value": "true"
+        }
+      ],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_filter_products_price",
+      "name": "Filter Products by Price Range",
+      "description": "Filter products between min and max price",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "min_price",
+          "value": "1000"
+        },
+        {
+          "name": "max_price",
+          "value": "10000"
+        }
+      ],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_get_product_by_id",
+      "name": "Get Product By ID",
+      "description": "Get a single product by its ID",
+      "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {}
+    },
+    {
+      "_id": "req_create_product",
+      "name": "Create Product (Vendor)",
+      "description": "Create a new product (requires vendor authentication)",
+      "url": "{{ _.base_url }}/api/v1/products",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"New Test Product\",\n  \"description\": \"This is a test product created from Insomnia\",\n  \"short_description\": \"Test product\",\n  \"sku\": \"TEST-PROD-001\",\n  \"price\": 1999.99,\n  \"compare_at_price\": 2499.99,\n  \"stock_quantity\": 25,\n  \"weight\": 0.5,\n  \"weight_unit\": \"kg\",\n  \"is_active\": true,\n  \"is_featured\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_update_product",
+      "name": "Update Product (Vendor)",
+      "description": "Update an existing product (requires vendor authentication and ownership)",
+      "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated Product Name\",\n  \"price\": 1899.99,\n  \"stock_quantity\": 20,\n  \"is_active\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_delete_product",
+      "name": "Delete Product (Vendor)",
+      "description": "Delete a product (requires vendor authentication and ownership)",
+      "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_get_vendor_products",
+      "name": "Get My Products (Vendor)",
+      "description": "Get all products belonging to the authenticated vendor",
+      "url": "{{ _.base_url }}/api/v1/vendor/products",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_get_user_profile",
+      "name": "Get User Profile",
+      "description": "Get the authenticated user's profile",
+      "url": "{{ _.base_url }}/api/v1/users/profile",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_update_user_profile",
+      "name": "Update User Profile",
+      "description": "Update the authenticated user's profile",
+      "url": "{{ _.base_url }}/api/v1/users/profile",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"newusername\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"phone\": \"+977-9841234567\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_get_user_by_id",
+      "name": "Get User By ID",
+      "description": "Get a specific user by their ID",
+      "url": "{{ _.base_url }}/api/v1/users/{{ _.user_id }}",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "req_delete_user_account",
+      "name": "Delete User Account",
+      "description": "Delete the authenticated user's account",
+      "url": "{{ _.base_url }}/api/v1/users/account",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.clerk_token }}"
+      }
+    },
+    {
+      "_id": "env_base",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "clerk_token": "YOUR_CLERK_TOKEN_HERE",
+        "product_id": "PASTE_PRODUCT_UUID_HERE",
+        "user_id": "PASTE_USER_UUID_HERE"
+      }
+    }
+  ]
+}
