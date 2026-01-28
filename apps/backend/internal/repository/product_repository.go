@@ -69,7 +69,7 @@ func (r *ProductRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.P
 func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]interface{}) ([]*model.Product, error) {
 	var products []*model.Product
 	query := `
-		SELECT id, vendor_id, name, description, price, stock_quantity, category, image_url, is_active, created_at, updated_at
+		SELECT id, shop_id, name, description, price, stock_quantity, category_id, image_url, is_active, created_at, updated_at
 		FROM products
 		WHERE is_active = true
 		ORDER BY created_at DESC
