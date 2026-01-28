@@ -211,3 +211,25 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*model.U
 
 	return user, nil
 }
+
+// GetShopIDByVendorID retrieves a shop ID for a vendor
+func (r *UserRepository) GetShopIDByVendorID(ctx context.Context, vendorID uuid.UUID) (uuid.UUID, error) {
+	var shopID uuid.UUID
+
+	query := `
+		SELECT id
+		FROM shops
+		WHERE vendor_id = $1 AND is_active = true
+		LIMIT 1
+	`
+
+	err := r.db.Pool.QueryRow(ctx, query, vendorID).Scan(&shopID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return uuid.Nil, fmt.Errorf("no shop found for vendor")
+		}
+		return uuid.Nil, fmt.Errorf("failed to get shop ID: %w", err)
+	}
+
+	return shopID, nil
+}

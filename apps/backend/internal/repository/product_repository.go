@@ -19,17 +19,17 @@ func NewProductRepository(db *database.Database) *ProductRepository {
 // Create creates a new product
 func (r *ProductRepository) Create(ctx context.Context, product *model.Product) error {
 	query := `
-		INSERT INTO products (id, vendor_id, name, description, price, stock_quantity, category, image_url, is_active, created_at, updated_at)
+		INSERT INTO products (id, shop_id, category_id, name, description, price, stock_quantity, image_url, is_active, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 	_, err := r.db.Pool.Exec(ctx, query,
 		product.ID,
-		product.VendorID,
+		product.ShopID,
+		product.CategoryID,
 		product.Name,
 		product.Description,
 		product.Price,
 		product.StockQuantity,
-		product.Category,
 		product.ImageURL,
 		product.IsActive,
 		product.CreatedAt,
@@ -42,18 +42,18 @@ func (r *ProductRepository) Create(ctx context.Context, product *model.Product) 
 func (r *ProductRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Product, error) {
 	var product model.Product
 	query := `
-		SELECT id, vendor_id, name, description, price, stock_quantity, category, image_url, is_active, created_at, updated_at
+		SELECT id, shop_id, category_id, name, description, price, stock_quantity, image_url, is_active, created_at, updated_at
 		FROM products
 		WHERE id = $1
 	`
 	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
 		&product.ID,
-		&product.VendorID,
+		&product.ShopID,
+		&product.CategoryID,
 		&product.Name,
 		&product.Description,
 		&product.Price,
 		&product.StockQuantity,
-		&product.Category,
 		&product.ImageURL,
 		&product.IsActive,
 		&product.CreatedAt,
@@ -69,7 +69,7 @@ func (r *ProductRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.P
 func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]interface{}) ([]*model.Product, error) {
 	var products []*model.Product
 	query := `
-		SELECT id, shop_id, name, description, price, stock_quantity, category_id, image_url, is_active, created_at, updated_at
+		SELECT id, shop_id, category_id, name, description, price, stock_quantity, image_url, is_active, created_at, updated_at
 		FROM products
 		WHERE is_active = true
 		ORDER BY created_at DESC
@@ -84,12 +84,12 @@ func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]inter
 		var product model.Product
 		err := rows.Scan(
 			&product.ID,
-			&product.VendorID,
+			&product.ShopID,
+			&product.CategoryID,
 			&product.Name,
 			&product.Description,
 			&product.Price,
 			&product.StockQuantity,
-			&product.Category,
 			&product.ImageURL,
 			&product.IsActive,
 			&product.CreatedAt,
@@ -104,16 +104,16 @@ func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]inter
 	return products, rows.Err()
 }
 
-// GetByVendorID retrieves all products for a specific vendor
-func (r *ProductRepository) GetByVendorID(ctx context.Context, vendorID uuid.UUID) ([]*model.Product, error) {
+// GetByShopID retrieves all products for a specific shop
+func (r *ProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID) ([]*model.Product, error) {
 	var products []*model.Product
 	query := `
-		SELECT id, vendor_id, name, description, price, stock_quantity, category, image_url, is_active, created_at, updated_at
+		SELECT id, shop_id, name, description, price, stock_quantity, category_id, image_url, is_active, created_at, updated_at
 		FROM products
-		WHERE vendor_id = $1
+		WHERE shop_id = $1
 		ORDER BY created_at DESC
 	`
-	rows, err := r.db.Pool.Query(ctx, query, vendorID)
+	rows, err := r.db.Pool.Query(ctx, query, shopID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +123,12 @@ func (r *ProductRepository) GetByVendorID(ctx context.Context, vendorID uuid.UUI
 		var product model.Product
 		err := rows.Scan(
 			&product.ID,
-			&product.VendorID,
+			&product.ShopID,
+			&product.CategoryID,
 			&product.Name,
 			&product.Description,
 			&product.Price,
 			&product.StockQuantity,
-			&product.Category,
 			&product.ImageURL,
 			&product.IsActive,
 			&product.CreatedAt,
@@ -147,7 +147,7 @@ func (r *ProductRepository) GetByVendorID(ctx context.Context, vendorID uuid.UUI
 func (r *ProductRepository) Update(ctx context.Context, product *model.Product) error {
 	query := `
 		UPDATE products
-		SET name = $1, description = $2, price = $3, stock_quantity = $4, category = $5, image_url = $6, is_active = $7, updated_at = $8
+		SET name = $1, description = $2, price = $3, stock_quantity = $4, category_id = $5, image_url = $6, is_active = $7, updated_at = $8
 		WHERE id = $9
 	`
 	_, err := r.db.Pool.Exec(ctx, query,
@@ -155,7 +155,7 @@ func (r *ProductRepository) Update(ctx context.Context, product *model.Product) 
 		product.Description,
 		product.Price,
 		product.StockQuantity,
-		product.Category,
+		product.CategoryID,
 		product.ImageURL,
 		product.IsActive,
 		product.UpdatedAt,

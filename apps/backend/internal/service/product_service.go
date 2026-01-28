@@ -21,15 +21,15 @@ func NewProductService(productRepo *repository.ProductRepository) *ProductServic
 }
 
 // CreateProduct creates a new product
-func (s *ProductService) CreateProduct(ctx context.Context, vendorID uuid.UUID, req *model.CreateProductRequest) (*model.Product, error) {
+func (s *ProductService) CreateProduct(ctx context.Context, shopID uuid.UUID, req *model.CreateProductRequest) (*model.Product, error) {
 	product := &model.Product{
 		ID:            uuid.New(),
-		VendorID:      vendorID,
+		ShopID:        shopID,
+		CategoryID:    req.CategoryID,
 		Name:          req.Name,
 		Description:   req.Description,
 		Price:         req.Price,
 		StockQuantity: req.StockQuantity,
-		Category:      req.Category,
 		ImageURL:      req.ImageURL,
 		IsActive:      true,
 		CreatedAt:     time.Now(),
@@ -54,21 +54,21 @@ func (s *ProductService) GetAllProducts(ctx context.Context, filters map[string]
 	return s.repo.GetAll(ctx, filters)
 }
 
-// GetVendorProducts retrieves all products for a vendor
-func (s *ProductService) GetVendorProducts(ctx context.Context, vendorID uuid.UUID) ([]*model.Product, error) {
-	return s.repo.GetByVendorID(ctx, vendorID)
+// GetShopProducts retrieves all products for a shop
+func (s *ProductService) GetShopProducts(ctx context.Context, shopID uuid.UUID) ([]*model.Product, error) {
+	return s.repo.GetByShopID(ctx, shopID)
 }
 
 // UpdateProduct updates a product
-func (s *ProductService) UpdateProduct(ctx context.Context, productID uuid.UUID, vendorID uuid.UUID, req *model.UpdateProductRequest) (*model.Product, error) {
+func (s *ProductService) UpdateProduct(ctx context.Context, productID uuid.UUID, shopID uuid.UUID, req *model.UpdateProductRequest) (*model.Product, error) {
 	// Get existing product
 	product, err := s.repo.GetByID(ctx, productID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if vendor owns the product
-	if product.VendorID != vendorID {
+	// Check if shop owns the product
+	if product.ShopID != shopID {
 		return nil, err // You could create a custom error for unauthorized access
 	}
 
@@ -85,8 +85,8 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 	if req.StockQuantity != nil {
 		product.StockQuantity = *req.StockQuantity
 	}
-	if req.Category != nil {
-		product.Category = req.Category
+	if req.CategoryID != nil {
+		product.CategoryID = req.CategoryID
 	}
 	if req.ImageURL != nil {
 		product.ImageURL = req.ImageURL
@@ -105,15 +105,15 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 }
 
 // DeleteProduct deletes a product
-func (s *ProductService) DeleteProduct(ctx context.Context, productID uuid.UUID, vendorID uuid.UUID) error {
+func (s *ProductService) DeleteProduct(ctx context.Context, productID uuid.UUID, shopID uuid.UUID) error {
 	// Get existing product
 	product, err := s.repo.GetByID(ctx, productID)
 	if err != nil {
 		return err
 	}
 
-	// Check if vendor owns the product
-	if product.VendorID != vendorID {
+	// Check if shop owns the product
+	if product.ShopID != shopID {
 		return err // You could create a custom error for unauthorized access
 	}
 

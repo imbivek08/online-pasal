@@ -74,6 +74,12 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 		return SendError(c, http.StatusForbidden, nil, "only vendors can create products")
 	}
 
+	// Get shop ID for vendor
+	shopID, err := h.userService.GetShopIDByVendorID(c.Request().Context(), user.ID)
+	if err != nil {
+		return SendError(c, http.StatusNotFound, err, "no shop found for vendor")
+	}
+
 	// Parse request body
 	var req model.CreateProductRequest
 	if err := c.Bind(&req); err != nil {
@@ -81,7 +87,7 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	}
 
 	// Create product
-	product, err := h.productService.CreateProduct(c.Request().Context(), user.ID, &req)
+	product, err := h.productService.CreateProduct(c.Request().Context(), shopID, &req)
 	if err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to create product")
 	}
@@ -103,6 +109,12 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 		return SendError(c, http.StatusNotFound, err, "user not found")
 	}
 
+	// Get shop ID for vendor
+	shopID, err := h.userService.GetShopIDByVendorID(c.Request().Context(), user.ID)
+	if err != nil {
+		return SendError(c, http.StatusNotFound, err, "no shop found for vendor")
+	}
+
 	// Parse product ID
 	productID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -116,7 +128,7 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	}
 
 	// Update product
-	product, err := h.productService.UpdateProduct(c.Request().Context(), productID, user.ID, &req)
+	product, err := h.productService.UpdateProduct(c.Request().Context(), productID, shopID, &req)
 	if err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to update product")
 	}
@@ -138,6 +150,12 @@ func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 		return SendError(c, http.StatusNotFound, err, "user not found")
 	}
 
+	// Get shop ID for vendor
+	shopID, err := h.userService.GetShopIDByVendorID(c.Request().Context(), user.ID)
+	if err != nil {
+		return SendError(c, http.StatusNotFound, err, "no shop found for vendor")
+	}
+
 	// Parse product ID
 	productID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -145,7 +163,7 @@ func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 	}
 
 	// Delete product
-	if err := h.productService.DeleteProduct(c.Request().Context(), productID, user.ID); err != nil {
+	if err := h.productService.DeleteProduct(c.Request().Context(), productID, shopID); err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to delete product")
 	}
 
@@ -166,8 +184,14 @@ func (h *ProductHandler) GetVendorProducts(c echo.Context) error {
 		return SendError(c, http.StatusNotFound, err, "user not found")
 	}
 
-	// Get vendor's products
-	products, err := h.productService.GetVendorProducts(c.Request().Context(), user.ID)
+	// Get shop ID for vendor
+	shopID, err := h.userService.GetShopIDByVendorID(c.Request().Context(), user.ID)
+	if err != nil {
+		return SendError(c, http.StatusNotFound, err, "no shop found for vendor")
+	}
+
+	// Get shop's products
+	products, err := h.productService.GetShopProducts(c.Request().Context(), shopID)
 	if err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to retrieve products")
 	}

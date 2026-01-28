@@ -107,3 +107,13 @@ func (s *UserService) SyncUserFromClerk(ctx context.Context, clerkID, email stri
 
 	return s.userRepo.Update(ctx, existingUser.ClerkID, updateReq)
 }
+
+// GetShopIDByVendorID retrieves the shop ID for a vendor
+func (s *UserService) GetShopIDByVendorID(ctx context.Context, vendorID uuid.UUID) (uuid.UUID, error) {
+	shopID, err := s.userRepo.GetShopIDByVendorID(ctx, vendorID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get shop ID: %w", err)
+	}
+
+	return shopID, nil
+}
