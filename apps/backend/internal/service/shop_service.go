@@ -124,7 +124,7 @@ func (s *ShopService) GetShopBySlug(ctx context.Context, slug string) (*model.Sh
 	return shop, nil
 }
 
-// ListShops retrieves shops with pagination and filters
+// ListShops retrieves shops with pagination and filters this
 func (s *ShopService) ListShops(ctx context.Context, page, pageSize int, search string, activeOnly bool) (*model.ShopListResponse, error) {
 	if page < 1 {
 		page = 1
@@ -154,7 +154,6 @@ func (s *ShopService) ListShops(ctx context.Context, page, pageSize int, search 
 	}, nil
 }
 
-// UpdateShop updates a shop
 func (s *ShopService) UpdateShop(ctx context.Context, shopID, vendorID uuid.UUID, req *model.UpdateShopRequest) (*model.Shop, error) {
 	// Get existing shop
 	shop, err := s.shopRepo.GetByID(ctx, shopID)
