@@ -23,8 +23,8 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 // GetProfile gets the authenticated user's profile
 func (h *UserHandler) GetProfile(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 
@@ -40,8 +40,8 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 // UpdateProfile updates the authenticated user's profile
 func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 
@@ -81,8 +81,8 @@ func (h *UserHandler) GetUserByID(c echo.Context) error {
 // DeleteAccount soft deletes the authenticated user's account
 func (h *UserHandler) DeleteAccount(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 

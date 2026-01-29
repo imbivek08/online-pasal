@@ -32,9 +32,17 @@ func SendSuccess(c echo.Context, statusCode int, message string, data interface{
 
 // SendError sends an error response
 func SendError(c echo.Context, statusCode int, err error, message string) error {
+	errorMsg := message
+	if err != nil {
+		errorMsg = err.Error()
+		if message != "" {
+			errorMsg = message + ": " + err.Error()
+		}
+	}
+
 	return c.JSON(statusCode, ErrorResponse{
 		Success: false,
-		Error:   err.Error(),
+		Error:   errorMsg,
 		Message: message,
 	})
 }

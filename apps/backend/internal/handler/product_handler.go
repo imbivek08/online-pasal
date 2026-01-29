@@ -58,8 +58,8 @@ func (h *ProductHandler) GetProductByID(c echo.Context) error {
 // CreateProduct creates a new product (vendor only)
 func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 
@@ -98,8 +98,8 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 // UpdateProduct updates a product (vendor only, own products)
 func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 
@@ -139,8 +139,8 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 // DeleteProduct deletes a product (vendor only, own products)
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 
@@ -173,8 +173,8 @@ func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 // GetVendorProducts retrieves all products for the authenticated vendor
 func (h *ProductHandler) GetVendorProducts(c echo.Context) error {
 	// Get Clerk user ID from middleware
-	clerkID, ok := middleware.GetClerkUserID(c)
-	if !ok {
+	clerkID := middleware.GetClerkUserID(c)
+	if clerkID == "" {
 		return SendError(c, http.StatusUnauthorized, nil, "user not authenticated")
 	}
 

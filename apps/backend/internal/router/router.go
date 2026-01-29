@@ -3,13 +3,14 @@ package router
 import (
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/imbivek08/hamropasal/internal/config"
 	"github.com/imbivek08/hamropasal/internal/database"
 	"github.com/imbivek08/hamropasal/internal/handler"
 	"github.com/imbivek08/hamropasal/internal/middleware"
 	"github.com/imbivek08/hamropasal/internal/repository"
 	"github.com/imbivek08/hamropasal/internal/service"
-	"github.com/labstack/echo/v4"
 )
 
 func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
@@ -22,14 +23,17 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
+	shopRepo := repository.NewShopRepository(db.Pool)
 
 	// Initialize services
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
+	shopService := service.NewShopService(shopRepo, userRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
 	productHandler := handler.NewProductHandler(productService, userService)
+	shopHandler := handler.NewShopHandler(shopService)
 	webhookHandler := handler.NewWebhookHandler(userService)
 
 	// API v1 group
@@ -41,19 +45,20 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 
 	// Auth middleware for protected routes
 	authMiddleware := middleware.ClerkAuthMiddleware(cfg)
+	loadUserMiddleware := middleware.LoadUserMiddleware(userService)
 
 	// User routes (protected)
-	users := v1.Group("/users", authMiddleware)
+	users := v1.Group("/users", authMiddleware, loadUserMiddleware)
 	users.GET("/profile", userHandler.GetProfile)
 	users.PUT("/profile", userHandler.UpdateProfile)
 	users.DELETE("/account", userHandler.DeleteAccount)
 	users.GET("/:id", userHandler.GetUserByID)
 
 	// Product routes
-	setupProductRoutes(v1, productHandler, authMiddleware)
+	setupProductRoutes(v1, productHandler, authMiddleware, loadUserMiddleware)
 
-	// Shop routes (to be implemented)
-	// setupShopRoutes(v1, db, authMiddleware)
+	// Shop routes
+	setupShopRoutes(v1, shopHandler, authMiddleware, loadUserMiddleware)
 }
 
 func healthCheck(c echo.Context) error {
@@ -68,7 +73,7 @@ func setupUserRoutes(g *echo.Group, db *database.Database) {
 	// Moved to main SetupRoutes function
 }
 
-func setupProductRoutes(g *echo.Group, productHandler *handler.ProductHandler, authMiddleware echo.MiddlewareFunc) {
+func setupProductRoutes(g *echo.Group, productHandler *handler.ProductHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
 	products := g.Group("/products")
 
 	// Public routes
@@ -76,16 +81,33 @@ func setupProductRoutes(g *echo.Group, productHandler *handler.ProductHandler, a
 	products.GET("/:id", productHandler.GetProductByID) // Get single product
 
 	// Protected routes (vendor only)
-	products.POST("", productHandler.CreateProduct, authMiddleware)       // Create product
-	products.PUT("/:id", productHandler.UpdateProduct, authMiddleware)    // Update product
-	products.DELETE("/:id", productHandler.DeleteProduct, authMiddleware) // Delete product
+	products.POST("", productHandler.CreateProduct, authMiddleware, loadUserMiddleware)       // Create product
+	products.PUT("/:id", productHandler.UpdateProduct, authMiddleware, loadUserMiddleware)    // Update product
+	products.DELETE("/:id", productHandler.DeleteProduct, authMiddleware, loadUserMiddleware) // Delete product
 
 	// Vendor-specific routes
-	vendor := g.Group("/vendor", authMiddleware)
+	vendor := g.Group("/vendor", authMiddleware, loadUserMiddleware)
 	vendor.GET("/products", productHandler.GetVendorProducts) // Get my products
 }
 
-// func setupShopRoutes(g *echo.Group, db *database.Database, authMiddleware echo.MiddlewareFunc) {
-// 	// shops := g.Group("/shops")
-// 	// Add shop-related routes here
-// }
+func setupShopRoutes(g *echo.Group, shopHandler *handler.ShopHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+	shops := g.Group("/shops")
+
+	// Public routes
+	shops.GET("", shopHandler.ListShops)                // List all shops
+	shops.GET("/:id", shopHandler.GetShopByID)          // Get shop by ID
+	shops.GET("/slug/:slug", shopHandler.GetShopBySlug) // Get shop by slug
+
+	// Vendor routes (protected, vendor role required)
+	vendorGroup := g.Group("", authMiddleware, loadUserMiddleware, middleware.RequireVendor())
+	vendorGroup.POST("/shops", shopHandler.CreateShop)                   // Create shop
+	vendorGroup.GET("/my-shop", shopHandler.GetMyShop)                   // Get my shop
+	vendorGroup.GET("/my-shop/stats", shopHandler.GetMyShopStats)        // Get my shop stats
+	vendorGroup.PUT("/shops/:id", shopHandler.UpdateShop)                // Update shop
+	vendorGroup.PATCH("/shops/:id/status", shopHandler.ToggleShopStatus) // Toggle shop status
+
+	// Admin routes (protected, admin role required)
+	adminGroup := g.Group("", authMiddleware, loadUserMiddleware, middleware.RequireAdmin())
+	adminGroup.DELETE("/shops/:id", shopHandler.DeleteShop)       // Delete shop
+	adminGroup.PATCH("/shops/:id/verify", shopHandler.VerifyShop) // Verify shop
+}
