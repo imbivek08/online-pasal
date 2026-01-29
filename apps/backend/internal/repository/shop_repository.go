@@ -22,8 +22,8 @@ func NewShopRepository(db *pgxpool.Pool) *ShopRepository {
 // Create creates a new shop
 func (r *ShopRepository) Create(ctx context.Context, shop *model.Shop) error {
 	query := `
-		INSERT INTO shops (id, vendor_id, name, slug, description, logo_url, banner_url, 
-		                   address, city, state, country, postal_code, phone, email, 
+		INSERT INTO shops (id, vendor_id, shop_name, slug, description, logo_url, banner_url, 
+		                   address, city, state, country, postal_code, contact_phone, contact_email, 
 		                   is_active, is_verified)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		RETURNING created_at, updated_at

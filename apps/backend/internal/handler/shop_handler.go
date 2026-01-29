@@ -60,6 +60,29 @@ func (h *ShopHandler) CreateShop(c echo.Context) error {
 	return SendSuccess(c, http.StatusCreated, "shop created successfully", shop.ToResponse())
 }
 
+// GetMyShop retrieves the authenticated vendor's shop
+// GET /api/v1/shops/my
+func (h *ShopHandler) GetMyShop(c echo.Context) error {
+	// Get user info from context
+	user, ok := c.Get("user").(*model.User)
+	if !ok || user == nil {
+		return SendError(c, http.StatusUnauthorized, nil, "user not found in context")
+	}
+
+	// Get shop
+	shop, err := h.shopService.GetMyShop(c.Request().Context(), user.ID)
+	if err != nil {
+		return SendError(c, http.StatusInternalServerError, err, "failed to get shop")
+	}
+
+	// If no shop found, return null
+	if shop == nil {
+		return SendSuccess(c, http.StatusOK, "no shop found", nil)
+	}
+
+	return SendSuccess(c, http.StatusOK, "shop retrieved successfully", shop.ToResponse())
+}
+
 // GetShopByID retrieves a shop by ID
 // GET /api/v1/shops/:id
 func (h *ShopHandler) GetShopByID(c echo.Context) error {
@@ -95,27 +118,6 @@ func (h *ShopHandler) GetShopBySlug(c echo.Context) error {
 	if err != nil {
 		if err.Error() == "shop not found" {
 			return SendError(c, http.StatusNotFound, err, "")
-		}
-		return SendError(c, http.StatusInternalServerError, err, "failed to get shop")
-	}
-
-	return SendSuccess(c, http.StatusOK, "shop retrieved successfully", shop.ToResponse())
-}
-
-// GetMyShop retrieves the authenticated vendor's shop
-// GET /api/v1/my-shop
-func (h *ShopHandler) GetMyShop(c echo.Context) error {
-	// Get user from context
-	user, ok := c.Get("user").(*model.User)
-	if !ok || user == nil {
-		return SendError(c, http.StatusUnauthorized, nil, "user not found in context")
-	}
-
-	// Get shop
-	shop, err := h.shopService.GetMyShop(c.Request().Context(), user.ID)
-	if err != nil {
-		if err.Error() == "shop not found" {
-			return SendError(c, http.StatusNotFound, nil, "you don't have a shop yet")
 		}
 		return SendError(c, http.StatusInternalServerError, err, "failed to get shop")
 	}

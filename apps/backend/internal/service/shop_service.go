@@ -27,6 +27,19 @@ func NewShopService(shopRepo *repository.ShopRepository, userRepo *repository.Us
 	}
 }
 
+// GetMyShop retrieves the shop for the authenticated vendor
+func (s *ShopService) GetMyShop(ctx context.Context, vendorID uuid.UUID) (*model.Shop, error) {
+	shop, err := s.shopRepo.GetByVendorID(ctx, vendorID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // No shop found, not an error
+		}
+		return nil, fmt.Errorf("failed to get shop: %w", err)
+	}
+
+	return shop, nil
+}
+
 // CreateShop creates a new shop for a vendor
 func (s *ShopService) CreateShop(ctx context.Context, vendorID uuid.UUID, req *model.CreateShopRequest) (*model.Shop, error) {
 	// Check if vendor exists and has vendor role
@@ -102,18 +115,6 @@ func (s *ShopService) GetShopByID(ctx context.Context, id uuid.UUID) (*model.Sho
 // GetShopBySlug retrieves a shop by slug
 func (s *ShopService) GetShopBySlug(ctx context.Context, slug string) (*model.Shop, error) {
 	shop, err := s.shopRepo.GetBySlug(ctx, slug)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("shop not found")
-		}
-		return nil, fmt.Errorf("failed to get shop: %w", err)
-	}
-	return shop, nil
-}
-
-// GetMyShop retrieves vendor's shop
-func (s *ShopService) GetMyShop(ctx context.Context, vendorID uuid.UUID) (*model.Shop, error) {
-	shop, err := s.shopRepo.GetByVendorID(ctx, vendorID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errors.New("shop not found")

@@ -104,8 +104,8 @@ func setupShopRoutes(g *echo.Group, shopHandler *handler.ShopHandler, authMiddle
 	// Vendor routes (protected, vendor role required)
 	vendorGroup := g.Group("", authMiddleware, loadUserMiddleware, middleware.RequireVendor())
 	vendorGroup.POST("/shops", shopHandler.CreateShop)                   // Create shop
-	vendorGroup.GET("/my-shop", shopHandler.GetMyShop)                   // Get my shop
-	vendorGroup.GET("/my-shop/stats", shopHandler.GetMyShopStats)        // Get my shop stats
+	vendorGroup.GET("/shops/my", shopHandler.GetMyShop)                  // Get my shop
+	vendorGroup.GET("/shops/my/stats", shopHandler.GetMyShopStats)       // Get my shop stats
 	vendorGroup.PUT("/shops/:id", shopHandler.UpdateShop)                // Update shop
 	vendorGroup.PATCH("/shops/:id/status", shopHandler.ToggleShopStatus) // Toggle shop status
 
