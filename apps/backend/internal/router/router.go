@@ -34,6 +34,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	userHandler := handler.NewUserHandler(userService)
 	productHandler := handler.NewProductHandler(productService, userService)
 	shopHandler := handler.NewShopHandler(shopService)
+	roleHandler := handler.NewRoleHandler(userService)
 	webhookHandler := handler.NewWebhookHandler(userService)
 
 	// API v1 group
@@ -53,6 +54,8 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	users.PUT("/profile", userHandler.UpdateProfile)
 	users.DELETE("/account", userHandler.DeleteAccount)
 	users.GET("/:id", userHandler.GetUserByID)
+	users.POST("/become-vendor", roleHandler.BecomeVendor)
+	users.GET("/my-role", roleHandler.GetMyRole)
 
 	// Product routes
 	setupProductRoutes(v1, productHandler, authMiddleware, loadUserMiddleware)

@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/imbivek08/hamropasal/internal/model"
 	"github.com/imbivek08/hamropasal/internal/repository"
 )
@@ -116,4 +119,39 @@ func (s *UserService) GetShopIDByVendorID(ctx context.Context, vendorID uuid.UUI
 	}
 
 	return shopID, nil
+}
+
+// ConvertToVendor converts a customer to vendor with business information
+func (s *UserService) ConvertToVendor(ctx context.Context, userID uuid.UUID, req *model.BecomeVendorRequest) (*model.User, error) {
+	// Get current user
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Validate current role
+	if user.Role == model.RoleVendor {
+		return nil, errors.New("already a vendor")
+	}
+
+	if user.Role == model.RoleAdmin {
+		return nil, errors.New("admin cannot become vendor")
+	}
+
+	// Update user to vendor role with business info
+	updateReq := &model.UpdateUserRequest{
+		Phone: &req.Phone,
+		Role:  model.RoleVendor,
+	}
+
+	// Update in database
+	updatedUser, err := s.userRepo.Update(ctx, user.ClerkID, updateReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return updatedUser, nil
 }

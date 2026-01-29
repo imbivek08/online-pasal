@@ -50,6 +50,22 @@ type UpdateUserRequest struct {
 	Role      UserRole `json:"role,omitempty"`
 }
 
+type BecomeVendorRequest struct {
+	BusinessName        string  `json:"business_name" validate:"required,min=3,max=100"`
+	Phone               string  `json:"phone" validate:"required,min=10,max=20"`
+	BusinessDescription *string `json:"business_description" validate:"omitempty,max=500"`
+}
+
+type BecomeVendorResponse struct {
+	ID            uuid.UUID `json:"id"`
+	Email         string    `json:"email"`
+	Role          UserRole  `json:"role"`
+	Phone         *string   `json:"phone"`
+	Message       string    `json:"message"`
+	CanCreateShop bool      `json:"can_create_shop"`
+	NextStep      string    `json:"next_step"`
+}
+
 type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`

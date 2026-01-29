@@ -35,6 +35,9 @@ func (s *Server) Start() error {
 	s.echo.HideBanner = true
 	s.echo.HidePort = false
 
+	// Register custom validator
+	s.echo.Validator = NewValidator()
+
 	// Apply global middleware
 	s.setupMiddleware()
 
