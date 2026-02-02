@@ -123,12 +123,29 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 	discount := 0.0
 	total := subtotal + shippingCost + tax - discount
 
-	// Create order
+	// Determine order status and payment status based on payment method
+	orderStatus := model.OrderStatusConfirmed
+	paymentStatus := model.PaymentStatusPending
+
+	// For online payments (eSewa, Khalti), verify payment first
+	// In production, you would integrate with payment gateway here
+	if req.PaymentMethod == "eSewa" || req.PaymentMethod == "Khalti" {
+		// TODO: Integrate with payment gateway API
+		// For now, we'll treat it as pending until payment webhook confirms
+		// When payment is confirmed, update payment_status to 'paid'
+		paymentStatus = model.PaymentStatusPending
+	} else if req.PaymentMethod == "COD" {
+		// COD orders are confirmed immediately, payment will be collected on delivery
+		paymentStatus = model.PaymentStatusPending
+	}
+
+	// Create order - automatically confirmed (no manual vendor approval needed)
+	now := time.Now()
 	order := &model.Order{
 		ID:                uuid.New(),
 		UserID:            userID,
 		OrderNumber:       model.GenerateOrderNumber(),
-		Status:            model.OrderStatusPending,
+		Status:            orderStatus,
 		ShippingAddressID: &shippingAddress.ID,
 		BillingAddressID:  billingAddressID,
 		Subtotal:          subtotal,
@@ -137,10 +154,11 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 		Discount:          discount,
 		Total:             total,
 		PaymentMethod:     &req.PaymentMethod,
-		PaymentStatus:     model.PaymentStatusPending,
+		PaymentStatus:     paymentStatus,
 		Notes:             req.Notes,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		CreatedAt:         now,
+		UpdatedAt:         now,
+		ConfirmedAt:       &now, // Order is auto-confirmed
 	}
 
 	if err := s.orderRepo.Create(ctx, order); err != nil {
@@ -273,8 +291,8 @@ func (s *OrderService) CancelOrder(ctx context.Context, orderID, userID uuid.UUI
 		return fmt.Errorf("order not found: %w", err)
 	}
 
-	// Check if order can be cancelled
-	if order.Status != model.OrderStatusPending && order.Status != model.OrderStatusConfirmed {
+	// Check if order can be cancelled (only confirmed orders, before processing)
+	if order.Status != model.OrderStatusConfirmed {
 		return fmt.Errorf("order cannot be cancelled in current status: %s", order.Status)
 	}
 
