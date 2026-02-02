@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/imbivek08/hamropasal/internal/database"
@@ -206,4 +207,42 @@ func (r *ProductRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM products WHERE id = $1`
 	_, err := r.db.Pool.Exec(ctx, query, id)
 	return err
+}
+
+// ReduceStock reduces product stock quantity
+func (r *ProductRepository) ReduceStock(ctx context.Context, productID uuid.UUID, quantity int) error {
+	query := `
+		UPDATE products
+		SET stock_quantity = stock_quantity - $1, updated_at = NOW()
+		WHERE id = $2 AND stock_quantity >= $1
+	`
+	result, err := r.db.Pool.Exec(ctx, query, quantity, productID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("insufficient stock or product not found")
+	}
+
+	return nil
+}
+
+// IncreaseStock increases product stock quantity
+func (r *ProductRepository) IncreaseStock(ctx context.Context, productID uuid.UUID, quantity int) error {
+	query := `
+		UPDATE products
+		SET stock_quantity = stock_quantity + $1, updated_at = NOW()
+		WHERE id = $2
+	`
+	result, err := r.db.Pool.Exec(ctx, query, quantity, productID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("product not found")
+	}
+
+	return nil
 }

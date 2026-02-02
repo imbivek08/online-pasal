@@ -25,12 +25,14 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	productRepo := repository.NewProductRepository(db)
 	shopRepo := repository.NewShopRepository(db.Pool)
 	cartRepo := repository.NewCartRepository(db)
+	orderRepo := repository.NewOrderRepository(db)
 
 	// Initialize services
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	shopService := service.NewShopService(shopRepo, userRepo)
 	cartService := service.NewCartService(cartRepo, productRepo)
+	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
@@ -39,6 +41,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	roleHandler := handler.NewRoleHandler(userService)
 	webhookHandler := handler.NewWebhookHandler(userService)
 	cartHandler := handler.NewCartHandler(cartService, userService)
+	orderHandler := handler.NewOrderHandler(orderService, userService, shopService)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")
@@ -68,6 +71,9 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 
 	// Cart routes
 	setupCartRoutes(v1, cartHandler, authMiddleware, loadUserMiddleware)
+
+	// Order routes
+	setupOrderRoutes(v1, orderHandler, authMiddleware, loadUserMiddleware)
 }
 
 func healthCheck(c echo.Context) error {
@@ -131,4 +137,19 @@ func setupCartRoutes(g *echo.Group, cartHandler *handler.CartHandler, authMiddle
 	cart.PUT("/items/:id", cartHandler.UpdateCartItem)    // Update cart item quantity
 	cart.DELETE("/items/:id", cartHandler.RemoveCartItem) // Remove item from cart
 	cart.DELETE("", cartHandler.ClearCart)                // Clear entire cart
+}
+
+func setupOrderRoutes(g *echo.Group, orderHandler *handler.OrderHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+	orders := g.Group("/orders", authMiddleware, loadUserMiddleware)
+
+	// Customer order routes
+	orders.POST("", orderHandler.CreateOrder)            // Create order (checkout)
+	orders.GET("", orderHandler.GetOrders)               // Get user's orders
+	orders.GET("/:id", orderHandler.GetOrderByID)        // Get order details
+	orders.POST("/:id/cancel", orderHandler.CancelOrder) // Cancel order
+
+	// Vendor order routes
+	vendor := g.Group("/vendor", authMiddleware, loadUserMiddleware, middleware.RequireVendor())
+	vendor.GET("/orders", orderHandler.GetVendorOrders)                // Get shop orders
+	vendor.PATCH("/orders/:id/status", orderHandler.UpdateOrderStatus) // Update order status
 }
