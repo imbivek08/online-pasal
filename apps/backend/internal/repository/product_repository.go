@@ -65,6 +65,43 @@ func (r *ProductRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.P
 	return &product, nil
 }
 
+// GetShopByProductID retrieves shop information for a product
+func (r *ProductRepository) GetShopByProductID(ctx context.Context, productID uuid.UUID) (*model.Shop, error) {
+	var shop model.Shop
+	query := `
+		SELECT s.id, s.vendor_id, s.shop_name as name, s.slug, s.description, s.logo_url, s.banner_url, 
+		       s.contact_email, s.contact_phone, s.address, s.city, s.state, s.country, s.postal_code,
+		       s.is_active, s.is_verified, s.created_at, s.updated_at
+		FROM shops s
+		INNER JOIN products p ON s.id = p.shop_id
+		WHERE p.id = $1
+	`
+	err := r.db.Pool.QueryRow(ctx, query, productID).Scan(
+		&shop.ID,
+		&shop.VendorID,
+		&shop.Name,
+		&shop.Slug,
+		&shop.Description,
+		&shop.LogoURL,
+		&shop.BannerURL,
+		&shop.Email,
+		&shop.Phone,
+		&shop.Address,
+		&shop.City,
+		&shop.State,
+		&shop.Country,
+		&shop.PostalCode,
+		&shop.IsActive,
+		&shop.IsVerified,
+		&shop.CreatedAt,
+		&shop.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &shop, nil
+}
+
 // GetAll retrieves all products with optional filters
 func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]interface{}) ([]*model.Product, error) {
 	var products []*model.Product

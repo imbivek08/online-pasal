@@ -24,11 +24,13 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	shopRepo := repository.NewShopRepository(db.Pool)
+	cartRepo := repository.NewCartRepository(db)
 
 	// Initialize services
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	shopService := service.NewShopService(shopRepo, userRepo)
+	cartService := service.NewCartService(cartRepo, productRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
@@ -36,6 +38,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	shopHandler := handler.NewShopHandler(shopService)
 	roleHandler := handler.NewRoleHandler(userService)
 	webhookHandler := handler.NewWebhookHandler(userService)
+	cartHandler := handler.NewCartHandler(cartService, userService)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")
@@ -62,6 +65,9 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 
 	// Shop routes
 	setupShopRoutes(v1, shopHandler, authMiddleware, loadUserMiddleware)
+
+	// Cart routes
+	setupCartRoutes(v1, cartHandler, authMiddleware, loadUserMiddleware)
 }
 
 func healthCheck(c echo.Context) error {
@@ -113,4 +119,16 @@ func setupShopRoutes(g *echo.Group, shopHandler *handler.ShopHandler, authMiddle
 	adminGroup := g.Group("", authMiddleware, loadUserMiddleware, middleware.RequireAdmin())
 	adminGroup.DELETE("/shops/:id", shopHandler.DeleteShop)       // Delete shop
 	adminGroup.PATCH("/shops/:id/verify", shopHandler.VerifyShop) // Verify shop
+}
+
+func setupCartRoutes(g *echo.Group, cartHandler *handler.CartHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+	cart := g.Group("/cart", authMiddleware, loadUserMiddleware)
+
+	// Cart routes (all protected, customer role)
+	cart.GET("", cartHandler.GetCart)                     // Get user's cart
+	cart.GET("/count", cartHandler.GetCartItemCount)      // Get cart item count
+	cart.POST("/items", cartHandler.AddToCart)            // Add item to cart
+	cart.PUT("/items/:id", cartHandler.UpdateCartItem)    // Update cart item quantity
+	cart.DELETE("/items/:id", cartHandler.RemoveCartItem) // Remove item from cart
+	cart.DELETE("", cartHandler.ClearCart)                // Clear entire cart
 }
