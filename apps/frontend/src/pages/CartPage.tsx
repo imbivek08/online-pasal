@@ -1,16 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import CartItemCard from '../components/CartItemCard';
+import ProductCard from '../components/ProductCard';
+import { api, type Product } from '../lib/api';
 
 export default function CartPage() {
   const { cart, loading, refreshCart, updateCartItem, removeCartItem, clearCart } = useCart();
   const navigate = useNavigate();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     refreshCart();
+    fetchFeaturedProducts();
   }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await api.getProducts();
+      if (response.success && response.data) {
+        // Get first 4 products as suggestions
+        setFeaturedProducts(response.data.slice(0, 4));
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
 
   const handleClearCart = async () => {
     if (!confirm('Are you sure you want to clear your entire cart?')) {
@@ -39,21 +55,39 @@ export default function CartPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
-          <p className="text-gray-600 mb-6">
-            Looks like you haven't added any items to your cart yet.
-          </p>
-          <button
-            onClick={() => navigate('/products')}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Continue Shopping
-          </button>
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Empty Cart Message */}
+          <div className="text-center mb-12">
+            <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6 my-6" />
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Your cart is empty</h2>
+            <p className="text-gray-600 mb-8 text-lg">
+              Looks like you haven't added any items to your cart yet.
+            </p>
+            <button
+              onClick={() => navigate('/products')}
+              className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold inline-flex items-center gap-2"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Browse Products
+            </button>
+          </div>
+
+          {/* Featured Products */}
+          {featuredProducts.length > 0 && (
+            <div className="mt-12">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                You might like these
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
