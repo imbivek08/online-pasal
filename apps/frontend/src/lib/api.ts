@@ -32,6 +32,169 @@ export interface Product {
   updated_at: string;
 }
 
+export interface BecomeVendorRequest {
+  business_name: string;
+  phone: string;
+  business_description?: string;
+}
+
+export interface BecomeVendorResponse {
+  id: string;
+  email: string;
+  role: string;
+  phone: string;
+  message: string;
+  can_create_shop: boolean;
+  next_step: string;
+}
+
+export interface Shop {
+  id: string;
+  vendor_id: string;
+  name: string;
+  slug: string;
+  description: string;
+  logo_url?: string;
+  banner_url?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  phone?: string;
+  email?: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateShopRequest {
+  name: string;
+  description: string;
+  logo_url?: string;
+  banner_url?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface CartItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_price: number;
+  product_image_url?: string;
+  stock_quantity: number;
+  is_active: boolean;
+  shop_id: string;
+  shop_name: string;
+  quantity: number;
+  subtotal: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Cart {
+  id: string;
+  user_id?: string;
+  items: CartItem[];
+  item_count: number;
+  subtotal: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AddToCartRequest {
+  product_id: string;
+  quantity: number;
+}
+
+export interface UpdateCartItemRequest {
+  quantity: number;
+}
+
+export interface Address {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state?: string;
+  postal_code?: string;
+  country: string;
+  is_default: boolean;
+  address_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AddressInput {
+  full_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state?: string;
+  postal_code?: string;
+  country: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  product_name: string;
+  product_image_url?: string;
+  shop_id: string;
+  shop_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  order_number: string;
+  status: string;
+  shipping_address?: Address;
+  billing_address?: Address;
+  items: OrderItem[];
+  subtotal: number;
+  shipping_cost: number;
+  tax: number;
+  discount: number;
+  total: number;
+  payment_method?: string;
+  payment_status: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  confirmed_at?: string;
+  shipped_at?: string;
+  delivered_at?: string;
+}
+
+export interface CreateOrderRequest {
+  shipping_address: AddressInput;
+  billing_address?: AddressInput;
+  payment_method: string;
+  use_same_address: boolean;
+  notes?: string;
+}
+
+export interface UpdateOrderStatusRequest {
+  status: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -107,6 +270,22 @@ class ApiClient {
     return this.request(`/api/v1/users/${id}`);
   }
 
+  async becomeVendor(data: BecomeVendorRequest): Promise<ApiResponse<BecomeVendorResponse>> {
+    return this.request('/api/v1/users/become-vendor', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyRole(): Promise<ApiResponse<{
+    role: string;
+    can_sell: boolean;
+    can_buy: boolean;
+    is_admin: boolean;
+  }>> {
+    return this.request('/api/v1/users/my-role');
+  }
+
   // Product endpoints
   async getProducts(): Promise<ApiResponse<Product[]>> {
     return this.request('/api/v1/products');
@@ -114,6 +293,94 @@ class ApiClient {
 
   async getProductById(id: string): Promise<ApiResponse<Product>> {
     return this.request(`/api/v1/products/${id}`);
+  }
+
+  // Shop endpoints
+  async getMyShop(): Promise<ApiResponse<Shop | null>> {
+    return this.request('/api/v1/shops/my');
+  }
+
+  async createShop(data: CreateShopRequest): Promise<ApiResponse<Shop>> {
+    return this.request('/api/v1/shops', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getShopById(id: string): Promise<ApiResponse<Shop>> {
+    return this.request(`/api/v1/shops/${id}`);
+  }
+
+  async getShopBySlug(slug: string): Promise<ApiResponse<Shop>> {
+    return this.request(`/api/v1/shops/slug/${slug}`);
+  }
+
+  // Cart endpoints
+  async getCart(): Promise<ApiResponse<Cart>> {
+    return this.request('/api/v1/cart');
+  }
+
+  async getCartItemCount(): Promise<ApiResponse<{ count: number }>> {
+    return this.request('/api/v1/cart/count');
+  }
+
+  async addToCart(data: AddToCartRequest): Promise<ApiResponse<CartItem>> {
+    return this.request('/api/v1/cart/items', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/cart/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeCartItem(itemId: string): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/cart/items/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async clearCart(): Promise<ApiResponse<null>> {
+    return this.request('/api/v1/cart', {
+      method: 'DELETE',
+    });
+  }
+
+  // Order endpoints
+  async createOrder(data: CreateOrderRequest): Promise<ApiResponse<Order>> {
+    return this.request('/api/v1/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getOrders(): Promise<ApiResponse<Order[]>> {
+    return this.request('/api/v1/orders');
+  }
+
+  async getOrderById(orderId: string): Promise<ApiResponse<Order>> {
+    return this.request(`/api/v1/orders/${orderId}`);
+  }
+
+  async cancelOrder(orderId: string): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/orders/${orderId}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async getVendorOrders(): Promise<ApiResponse<Order[]>> {
+    return this.request('/api/v1/vendor/orders');
+  }
+
+  async updateOrderStatus(orderId: string, data: UpdateOrderStatusRequest): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/vendor/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
   }
 }
 

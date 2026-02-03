@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import CartIcon from './CartIcon';
 
 export default function Navbar() {
   const { user } = useUser();
@@ -56,6 +57,7 @@ export default function Navbar() {
               <Link to="/dashboard" className="text-gray-700 hover:text-primary font-medium transition-colors text-sm lg:text-base">
                 Dashboard
               </Link>
+              <CartIcon />
             </SignedIn>
 
             <SignedOut>
@@ -156,6 +158,13 @@ export default function Navbar() {
                   className="text-gray-700 hover:text-primary hover:bg-gray-50 font-medium py-3 px-3 rounded-lg transition-colors"
                 >
                   Dashboard
+                <Link 
+                  to="/cart" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-gray-700 hover:text-primary hover:bg-gray-50 font-medium py-3 px-3 rounded-lg transition-colors"
+                >
+                  Cart
+                </Link>
                 </Link>
               </SignedIn>
 

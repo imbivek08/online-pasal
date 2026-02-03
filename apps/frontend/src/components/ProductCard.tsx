@@ -1,11 +1,17 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { ShoppingCart } from 'lucide-react';
 import type { Product } from '../lib/api';
+import { useCart } from '../contexts/CartContext';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [adding, setAdding] = useState(false);
+  const { addToCart } = useCart();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NP', {
       style: 'currency',
@@ -85,19 +91,36 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
           
           <button
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${
               product.stock_quantity > 0
                 ? 'bg-primary text-white hover:bg-primary/90 hover:shadow-md'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             }`}
-            disabled={product.stock_quantity === 0}
-            onClick={(e) => {
+            disabled={product.stock_quantity === 0 || adding}
+            onClick={async (e) => {
               e.preventDefault(); // Prevent navigation when clicking the button
-              // TODO: Add to cart functionality
-              console.log('Add to cart:', product.id);
+              if (product.stock_quantity > 0) {
+                setAdding(true);
+                try {
+                  await addToCart(product.id, 1);
+                  // Optional: Show success toast/notification
+                } catch (error) {
+                  console.error('Failed to add to cart:', error);
+                  alert('Failed to add to cart. Please try again.');
+                } finally {
+                  setAdding(false);
+                }
+              }
             }}
           >
-            {product.stock_quantity > 0 ? 'Add' : 'Out'}
+            {adding ? (
+              'Adding...'
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4" />
+                {product.stock_quantity > 0 ? 'Add' : 'Out'}
+              </>
+            )}
           </button>
         </div>
       </div>
