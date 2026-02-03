@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import { CartProvider } from './contexts/CartContext';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
@@ -18,7 +20,10 @@ function App() {
   return (
     <BrowserRouter>
       <CartProvider>
-        <Routes>
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/sign-in/*" element={<SignInPage />} />
@@ -127,7 +132,10 @@ function App() {
           
           {/* Catch all - redirect to landing */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            </Routes>
+          </main>
+          <Footer />
+        </div>
       </CartProvider>
     </BrowserRouter>
   );

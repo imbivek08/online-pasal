@@ -2,7 +2,6 @@ import { useUser, useAuth } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi, type User, type Shop } from '../lib/api';
-import Navbar from '../components/Navbar';
 import BecomeVendorModal from '../components/BecomeVendorModal';
 
 export default function DashboardPage() {
@@ -101,8 +100,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <main className="pt-20 sm:pt-24 px-3 sm:px-4 md:px-6 lg:px-8 pb-8 sm:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Welcome Card */}

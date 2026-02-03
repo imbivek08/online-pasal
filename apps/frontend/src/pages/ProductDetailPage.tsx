@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Store, Package, CheckCircle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Package, CheckCircle } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
-import Navbar from '../components/Navbar';
 import   { api,  } from '../lib/api';
 import type { Product } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
+import ProductCard from '../components/ProductCard';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +19,7 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -38,6 +39,16 @@ export default function ProductDetailPage() {
         const response = await api.getProductById(id);
         if (response.data) {
           setProduct(response.data);
+          
+          // Fetch all products to get related ones
+          const productsResponse = await api.getProducts();
+          if (productsResponse.success && productsResponse.data) {
+            // Filter out current product and get up to 4 related products
+            const related = productsResponse.data
+              .filter(p => p.id !== id && p.is_active)
+              .slice(0, 4);
+            setRelatedProducts(related);
+          }
         } else {
           setError('Product not found');
         }
@@ -85,7 +96,6 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
@@ -99,7 +109,6 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
@@ -119,8 +128,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <button
@@ -135,7 +142,7 @@ export default function ProductDetailPage() {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-10">
             {/* Product Image */}
-            <div className="relative aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl overflow-hidden">
+            <div className="relative h-96 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl overflow-hidden">
               {product.image_url ? (
                 <img
                   src={product.image_url}
@@ -290,6 +297,18 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

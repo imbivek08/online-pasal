@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import { api, type Product } from '../lib/api';
 
@@ -29,8 +28,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-secondary to-purple-900">
-      <Navbar />
-      
       {/* Hero Section */}
       <div className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
