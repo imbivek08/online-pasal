@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import ProductCard from '../components/ProductCard';
 import { api, type Product } from '../lib/api';
 
@@ -40,12 +41,22 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-12 sm:mb-16 px-4">
-            <Link 
-              to="/sign-up" 
-              className="bg-white text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 text-center"
-            >
-              Get Started Free
-            </Link>
+            <SignedOut>
+              <Link 
+                to="/sign-up" 
+                className="bg-white text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 text-center"
+              >
+                Get Started Free
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link 
+                to="/dashboard" 
+                className="bg-white text-primary px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 text-center"
+              >
+                Go to Dashboard
+              </Link>
+            </SignedIn>
             <Link 
               to="/products" 
               className="bg-transparent text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold border-2 border-white hover:bg-white/10 transition-all duration-300 text-center"
@@ -179,18 +190,42 @@ export default function LandingPage() {
       {/* CTA Section */}
       <div className="bg-gradient-to-r from-primary to-secondary py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6">
-            Ready to Start Selling?
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 px-4">
-            Join thousands of vendors already growing their business on Nepify.
-          </p>
-          <Link 
-            to="/sign-up" 
-            className="inline-block bg-white text-primary px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300"
-          >
-            Create Your Account
-          </Link>
+          <SignedOut>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6">
+              Ready to Start Selling?
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 px-4">
+              Join thousands of vendors already growing their business on Nepify.
+            </p>
+            <Link 
+              to="/sign-up" 
+              className="inline-block bg-white text-primary px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300"
+            >
+              Create Your Account
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6">
+              Start Exploring!
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 px-4">
+              Discover amazing products or manage your vendor dashboard.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                to="/dashboard" 
+                className="inline-block bg-white text-primary px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300"
+              >
+                My Dashboard
+              </Link>
+              <Link 
+                to="/products" 
+                className="inline-block bg-transparent text-white border-2 border-white px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold hover:bg-white/10 transition-all duration-300"
+              >
+                Shop Now
+              </Link>
+            </div>
+          </SignedIn>
         </div>
       </div>
 
