@@ -26,6 +26,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	shopRepo := repository.NewShopRepository(db.Pool)
 	cartRepo := repository.NewCartRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
+	reviewRepo := repository.NewReviewRepository(db)
 
 	// Initialize services
 	userService := service.NewUserService(userRepo)
@@ -33,6 +34,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	shopService := service.NewShopService(shopRepo, userRepo)
 	cartService := service.NewCartService(cartRepo, productRepo)
 	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
+	reviewService := service.NewReviewService(reviewRepo, orderRepo, productRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
@@ -42,6 +44,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	webhookHandler := handler.NewWebhookHandler(userService)
 	cartHandler := handler.NewCartHandler(cartService, userService)
 	orderHandler := handler.NewOrderHandler(orderService, userService, shopService)
+	reviewHandler := handler.NewReviewHandler(reviewService, userService)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")
@@ -74,6 +77,9 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 
 	// Order routes
 	setupOrderRoutes(v1, orderHandler, authMiddleware, loadUserMiddleware)
+
+	// Review routes
+	setupReviewRoutes(v1, reviewHandler, authMiddleware, loadUserMiddleware)
 }
 
 func healthCheck(c echo.Context) error {
@@ -152,4 +158,20 @@ func setupOrderRoutes(g *echo.Group, orderHandler *handler.OrderHandler, authMid
 	vendor := g.Group("/vendor", authMiddleware, loadUserMiddleware, middleware.RequireVendor())
 	vendor.GET("/orders", orderHandler.GetVendorOrders)                // Get shop orders
 	vendor.PATCH("/orders/:id/status", orderHandler.UpdateOrderStatus) // Update order status
+}
+func setupReviewRoutes(g *echo.Group, reviewHandler *handler.ReviewHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+	reviews := g.Group("/reviews")
+
+	// Public routes
+	reviews.GET("/product/:productId", reviewHandler.GetProductReviews)           // Get product reviews
+	reviews.GET("/product/:productId/stats", reviewHandler.GetProductRatingStats) // Get product rating stats
+	reviews.GET("/:id", reviewHandler.GetReviewByID)                              // Get single review
+
+	// Protected routes
+	protected := reviews.Group("", authMiddleware, loadUserMiddleware)
+	protected.POST("", reviewHandler.CreateReview)                              // Create review
+	protected.PUT("/:id", reviewHandler.UpdateReview)                           // Update review
+	protected.DELETE("/:id", reviewHandler.DeleteReview)                        // Delete review
+	protected.POST("/:id/helpful", reviewHandler.MarkReviewHelpful)             // Mark review as helpful
+	protected.GET("/can-review/:productId", reviewHandler.CanUserReviewProduct) // Check if can review
 }
