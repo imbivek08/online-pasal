@@ -28,19 +28,26 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-secondary to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-primary via-secondary to-purple-900 overflow-hidden">
       {/* Hero Section */}
-      <div className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight">
-            🚀 Welcome to <span className="text-accent">Nepify</span>
+      <div className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 relative">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-accent/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight animate-fade-in-up">
+            🚀 Welcome to <span className="text-accent animate-pulse">Edokan</span>
           </h1>
-          <p className="text-base sm:text-xl md:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto px-2">
+          <p className="text-base sm:text-xl md:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto px-2 animate-fade-in-up animation-delay-200">
             Your modern e-commerce platform for the future. 
             Buy and sell with confidence.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-12 sm:mb-16 px-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-12 sm:mb-16 px-4 animate-fade-in-up animation-delay-400">
             <SignedOut>
               <Link 
                 to="/sign-up" 
@@ -64,6 +71,14 @@ export default function LandingPage() {
               Browse Products
             </Link>
           </div>
+        </div>
+
+        {/* Floating Icons Animation */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 text-6xl opacity-40 animate-float">🛒</div>
+          <div className="absolute top-1/3 right-1/4 text-5xl opacity-40 animate-float animation-delay-500">📦</div>
+          <div className="absolute bottom-1/4 left-1/3 text-4xl opacity-40 animate-float animation-delay-1000">⭐</div>
+          <div className="absolute top-2/3 right-1/3 text-5xl opacity-40 animate-float animation-delay-700">🎁</div>
         </div>
       </div>
 
@@ -114,7 +129,7 @@ export default function LandingPage() {
       <div className="bg-white py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-16">
-            Why Choose Nepify?
+            Why Choose Edokan?
           </h2>
           
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -195,7 +210,7 @@ export default function LandingPage() {
               Ready to Start Selling?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 px-4">
-              Join thousands of vendors already growing their business on Nepify.
+              Join thousands of vendors already growing their business on Edokan.
             </p>
             <Link 
               to="/sign-up" 
@@ -233,7 +248,7 @@ export default function LandingPage() {
       <footer className="bg-gray-900 text-white py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm sm:text-base text-gray-400">
-            © 2024 Nepify. All rights reserved.
+            © 2024 Edokan. All rights reserved.
           </p>
         </div>
       </footer>

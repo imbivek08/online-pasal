@@ -9,7 +9,7 @@ export default function SignInPage() {
         <div className="text-center mb-6 sm:mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 text-white hover:opacity-80 transition-opacity">
             <span className="text-3xl sm:text-4xl">🚀</span>
-            <span className="text-2xl sm:text-3xl font-bold">Nepify</span>
+            <span className="text-2xl sm:text-3xl font-bold">Edokan</span>
           </Link>
           <p className="text-sm sm:text-base text-white/80 mt-2">Welcome back! Sign in to your account</p>
         </div>

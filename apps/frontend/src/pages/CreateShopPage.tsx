@@ -119,7 +119,7 @@ export default function CreateShopPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <p className="text-sm font-medium text-blue-900">Shop URL Preview:</p>
                 <p className="mt-1 text-sm text-blue-700 font-mono">
-                  nepify.com/shop/{slug}
+                  edokan.com/shop/{slug}
                 </p>
               </div>
             )}

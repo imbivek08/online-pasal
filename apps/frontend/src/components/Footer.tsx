@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* About Section */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Nepify</h3>
+            <h3 className="text-white text-lg font-bold mb-4">Edokan</h3>
             <p className="text-sm text-gray-400 mb-4">
               Your modern e-commerce platform for the future. Buy and sell with confidence.
             </p>
@@ -90,8 +90,8 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
-                <a href="mailto:support@nepify.com" className="hover:text-primary transition-colors">
-                  support@nepify.com
+                <a href="mailto:support@edokan.com" className="hover:text-primary transition-colors">
+                  support@edokan.com
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8 text-center text-sm">
-          <p>© {currentYear} Nepify. All rights reserved.</p>
+          <p>© {currentYear} Edokan. All rights reserved.</p>
         </div>
       </div>
     </footer>

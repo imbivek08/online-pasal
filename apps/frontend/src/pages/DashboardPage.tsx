@@ -187,7 +187,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    Ready to Sell on Nepify?
+                    Ready to Sell on Edokan?
                   </h3>
                   <p className="text-sm sm:text-base text-gray-700 mb-4">
                     Start your own shop and reach thousands of customers! Join our community of successful vendors.
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-sm text-gray-600">
-                      <p><span className="font-semibold">Shop URL:</span> nepify.com/shop/{shop.slug}</p>
+                      <p><span className="font-semibold">Shop URL:</span> edokan.com/shop/{shop.slug}</p>
                       {shop.phone && <p><span className="font-semibold">Phone:</span> {shop.phone}</p>}
                       {shop.email && <p><span className="font-semibold">Email:</span> {shop.email}</p>}
                     </div>
