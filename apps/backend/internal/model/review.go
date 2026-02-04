@@ -47,20 +47,22 @@ type UpdateReviewRequest struct {
 
 // ProductRatingStats represents aggregated rating statistics for a product
 type ProductRatingStats struct {
-	ProductID       uuid.UUID   `json:"product_id"`
-	AverageRating   float64     `json:"average_rating"`
-	TotalReviews    int         `json:"total_reviews"`
-	RatingBreakdown map[int]int `json:"rating_breakdown"`
+	ProductID      uuid.UUID `json:"product_id"`
+	AverageRating  float64   `json:"average_rating"`
+	TotalReviews   int       `json:"total_reviews"`
+	FiveStarCount  int       `json:"five_star_count"`
+	FourStarCount  int       `json:"four_star_count"`
+	ThreeStarCount int       `json:"three_star_count"`
+	TwoStarCount   int       `json:"two_star_count"`
+	OneStarCount   int       `json:"one_star_count"`
 }
 
 // ReviewListResponse represents paginated review list response
 type ReviewListResponse struct {
-	Reviews       []ReviewWithUser `json:"reviews"`
-	TotalCount    int              `json:"total_count"`
-	Page          int              `json:"page"`
-	PageSize      int              `json:"page_size"`
-	TotalPages    int              `json:"total_pages"`
-	AverageRating float64          `json:"average_rating"`
+	Reviews      []ReviewWithUser `json:"reviews"`
+	TotalReviews int              `json:"total_reviews"`
+	Page         int              `json:"page"`
+	Limit        int              `json:"limit"`
 }
 
 // CanReviewResponse indicates whether a user can review a product
