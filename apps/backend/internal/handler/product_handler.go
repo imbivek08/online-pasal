@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/imbivek08/hamropasal/internal/middleware"
@@ -25,8 +25,30 @@ func NewProductHandler(productService *service.ProductService, userService *serv
 
 // GetProducts retrieves all products (public)
 func (h *ProductHandler) GetProducts(c echo.Context) error {
-	products, err := h.productService.GetAllProducts(c.Request().Context(), nil)
-	fmt.Println("this end point was hitted")
+	// Build filters from query params
+	filters := make(map[string]interface{})
+
+	if search := c.QueryParam("search"); search != "" {
+		filters["search"] = search
+	}
+
+	if minPrice := c.QueryParam("min_price"); minPrice != "" {
+		if val, err := strconv.ParseFloat(minPrice, 64); err == nil {
+			filters["min_price"] = val
+		}
+	}
+
+	if maxPrice := c.QueryParam("max_price"); maxPrice != "" {
+		if val, err := strconv.ParseFloat(maxPrice, 64); err == nil {
+			filters["max_price"] = val
+		}
+	}
+
+	if sortBy := c.QueryParam("sort_by"); sortBy != "" {
+		filters["sort_by"] = sortBy
+	}
+
+	products, err := h.productService.GetAllProducts(c.Request().Context(), filters)
 	if err != nil {
 		return SendError(c, http.StatusInternalServerError, err, "failed to retrieve products")
 	}

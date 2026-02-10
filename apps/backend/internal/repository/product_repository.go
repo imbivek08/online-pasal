@@ -110,9 +110,46 @@ func (r *ProductRepository) GetAll(ctx context.Context, filters map[string]inter
 		SELECT id, shop_id, category_id, name, description, price, stock_quantity, image_url, is_active, created_at, updated_at
 		FROM products
 		WHERE is_active = true
-		ORDER BY created_at DESC
 	`
-	rows, err := r.db.Pool.Query(ctx, query)
+	args := []interface{}{}
+	argIndex := 1
+
+	// Search filter (matches name or description)
+	if search, ok := filters["search"].(string); ok && search != "" {
+		query += fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argIndex, argIndex+1)
+		searchPattern := "%" + search + "%"
+		args = append(args, searchPattern, searchPattern)
+		argIndex += 2
+	}
+
+	// Min price filter
+	if minPrice, ok := filters["min_price"].(float64); ok {
+		query += fmt.Sprintf(" AND price >= $%d", argIndex)
+		args = append(args, minPrice)
+		argIndex++
+	}
+
+	// Max price filter
+	if maxPrice, ok := filters["max_price"].(float64); ok {
+		query += fmt.Sprintf(" AND price <= $%d", argIndex)
+		args = append(args, maxPrice)
+		argIndex++
+	}
+
+	// Sort
+	sortBy, _ := filters["sort_by"].(string)
+	switch sortBy {
+	case "price_asc":
+		query += " ORDER BY price ASC"
+	case "price_desc":
+		query += " ORDER BY price DESC"
+	case "name_asc":
+		query += " ORDER BY name ASC"
+	default:
+		query += " ORDER BY created_at DESC"
+	}
+
+	rows, err := r.db.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

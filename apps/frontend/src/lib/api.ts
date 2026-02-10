@@ -32,6 +32,13 @@ export interface Product {
   updated_at: string;
 }
 
+export interface ProductSearchParams {
+  search?: string;
+  min_price?: number;
+  max_price?: number;
+  sort_by?: 'price_asc' | 'price_desc' | 'name_asc' | 'newest';
+}
+
 export interface BecomeVendorRequest {
   business_name: string;
   phone: string;
@@ -342,8 +349,14 @@ class ApiClient {
   }
 
   // Product endpoints
-  async getProducts(): Promise<ApiResponse<Product[]>> {
-    return this.request('/api/v1/products');
+  async getProducts(params?: ProductSearchParams): Promise<ApiResponse<Product[]>> {
+    const queryParts: string[] = [];
+    if (params?.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
+    if (params?.min_price !== undefined) queryParts.push(`min_price=${params.min_price}`);
+    if (params?.max_price !== undefined) queryParts.push(`max_price=${params.max_price}`);
+    if (params?.sort_by) queryParts.push(`sort_by=${params.sort_by}`);
+    const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+    return this.request(`/api/v1/products${queryString}`);
   }
 
   async getProductById(id: string): Promise<ApiResponse<Product>> {
