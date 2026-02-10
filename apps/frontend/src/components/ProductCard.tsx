@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
-import type { Product } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Star } from 'lucide-react';
+import { api, type Product, type ProductRatingStats } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
 
 interface ProductCardProps {
@@ -10,7 +10,14 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [adding, setAdding] = useState(false);
+  const [ratingStats, setRatingStats] = useState<ProductRatingStats | null>(null);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    api.getProductRatingStats(product.id)
+      .then(stats => setRatingStats(stats))
+      .catch(() => {});
+  }, [product.id]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NP', {
@@ -80,13 +87,38 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
         )}
 
-        <div className="flex items-center justify-between mt-3">
+        {/* Rating */}
+        <div className="flex items-center gap-1 mb-3">
+          {ratingStats && ratingStats.total_reviews > 0 ? (
+            <>
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-3.5 h-3.5 ${
+                      star <= Math.round(ratingStats.average_rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-gray-200 text-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-600 font-medium">
+                {ratingStats.average_rating.toFixed(1)}
+              </span>
+              <span className="text-xs text-gray-400">
+                ({ratingStats.total_reviews})
+              </span>
+            </>
+          ) : (
+            <span className="text-xs text-gray-400">No reviews yet</span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-bold text-primary">
               {formatPrice(product.price)}
-            </div>
-            <div className="text-xs text-gray-500 mt-0.5">
-              {product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Unavailable'}
             </div>
           </div>
           
