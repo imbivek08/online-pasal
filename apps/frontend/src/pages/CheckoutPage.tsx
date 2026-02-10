@@ -14,6 +14,7 @@ const emptyAddress: AddressInput = {
   state: '',
   postal_code: '',
   country: 'Nepal',
+  is_default: false,
 };
 
 export default function CheckoutPage() {
@@ -64,10 +65,12 @@ export default function CheckoutPage() {
         return;
       }
 
-      // No addresses at all — new user
+      // No addresses at all — new user, auto-default their first address
       setAddressMode('new');
+      setFormAddress({ ...emptyAddress, is_default: true });
     } catch {
       setAddressMode('new');
+      setFormAddress({ ...emptyAddress, is_default: true });
     } finally {
       setAddressLoading(false);
     }
@@ -94,7 +97,8 @@ export default function CheckoutPage() {
 
   const switchToNew = () => {
     setAddressMode('new');
-    setFormAddress(emptyAddress);
+    // If no saved address exists, this is the user's first address — auto-default it
+    setFormAddress({ ...emptyAddress, is_default: !savedAddress });
   };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -315,6 +319,23 @@ export default function CheckoutPage() {
                         />
                       </div>
                     </div>
+
+                    {/* Save as default checkbox — only in 'new' mode */}
+                    {addressMode === 'new' && (
+                      <div className="mt-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formAddress.is_default ?? false}
+                            onChange={(e) => setFormAddress({ ...formAddress, is_default: e.target.checked })}
+                            className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            {savedAddress ? 'Save as my default address' : 'This is your first address — it will be saved as default'}
+                          </span>
+                        </label>
+                      </div>
+                    )}
                   </>
                 )}
 
