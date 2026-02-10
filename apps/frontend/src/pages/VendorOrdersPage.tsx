@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useApi } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import type { Order } from '../lib/api';
 
 const statusColors = {
@@ -27,6 +28,7 @@ const statusIcons = {
 export default function VendorOrdersPage() {
   const navigate = useNavigate();
   const api = useApi();
+  const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -64,7 +66,7 @@ export default function VendorOrdersPage() {
       }
     } catch (error: any) {
       console.error('Failed to update order status:', error);
-      alert(error.message || 'Failed to update order status');
+      toast.error(error.message || 'Failed to update order status');
     } finally {
       setUpdatingStatus(null);
     }

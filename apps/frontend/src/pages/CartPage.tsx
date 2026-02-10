@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
 import CartItemCard from '../components/CartItemCard';
 import ProductCard from '../components/ProductCard';
 import { api, type Product } from '../lib/api';
@@ -9,6 +10,7 @@ import { api, type Product } from '../lib/api';
 export default function CartPage() {
   const { cart, loading, refreshCart, updateCartItem, removeCartItem, clearCart } = useCart();
   const navigate = useNavigate();
+  const toast = useToast();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function CartPage() {
       await clearCart();
     } catch (error) {
       console.error('Failed to clear cart:', error);
-      alert('Failed to clear cart');
+      toast.error('Failed to clear cart');
     }
   };
 

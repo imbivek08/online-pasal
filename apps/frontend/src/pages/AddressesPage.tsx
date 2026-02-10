@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, Star, Loader2 } from 'lucide-react';
 import { useApi } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import type { Address, AddressInput } from '../lib/api';
 import AddressFormModal from '../components/AddressFormModal';
 
 export default function AddressesPage() {
   const api = useApi();
+  const toast = useToast();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function AddressesPage() {
       await api.deleteAddress(id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
     } catch (err: any) {
-      alert(err.message || 'Failed to delete address');
+      toast.error(err.message || 'Failed to delete address');
     } finally {
       setDeletingId(null);
     }
@@ -60,7 +62,7 @@ export default function AddressesPage() {
       await api.setDefaultAddress(id);
       await loadAddresses();
     } catch (err: any) {
-      alert(err.message || 'Failed to set default address');
+      toast.error(err.message || 'Failed to set default address');
     } finally {
       setSettingDefaultId(null);
     }

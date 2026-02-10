@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, CheckCircle, MapPin, Home } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
 import { useApi } from '../lib/api';
 import type { Address, AddressInput } from '../lib/api';
 
@@ -20,6 +21,7 @@ const emptyAddress: AddressInput = {
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cart } = useCart();
+  const toast = useToast();
   const api = useApi();
 
   const [loading, setLoading] = useState(false);
@@ -105,7 +107,7 @@ export default function CheckoutPage() {
     e.preventDefault();
 
     if (!cart || cart.items.length === 0) {
-      alert('Your cart is empty');
+      toast.warning('Your cart is empty');
       return;
     }
 
@@ -121,7 +123,7 @@ export default function CheckoutPage() {
         orderPayload.shipping_address_id = savedAddress.id;
       } else {
         if (!formAddress.full_name || !formAddress.phone || !formAddress.address_line1 || !formAddress.city || !formAddress.country) {
-          alert('Please fill in all required address fields');
+          toast.warning('Please fill in all required address fields');
           setLoading(false);
           return;
         }
@@ -131,12 +133,12 @@ export default function CheckoutPage() {
       const response = await api.createOrder(orderPayload);
 
       if (response.success && response.data) {
-        alert('Order placed successfully!');
+        toast.success(`Order placed successfully! Order #${response.data.order_number}`);
         navigate(`/orders/${response.data.id}`);
       }
     } catch (error: any) {
       console.error('Failed to create order:', error);
-      alert(error.message || 'Failed to place order. Please try again.');
+      toast.error(error.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }

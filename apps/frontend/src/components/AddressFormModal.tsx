@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { Address, AddressInput } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 
 interface AddressFormModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const emptyForm: AddressInput = {
 export default function AddressFormModal({ isOpen, onClose, onSave, address, title }: AddressFormModalProps) {
   const [form, setForm] = useState<AddressInput>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (address) {
@@ -51,7 +53,7 @@ export default function AddressFormModal({ isOpen, onClose, onSave, address, tit
       await onSave(form);
       onClose();
     } catch (err: any) {
-      alert(err.message || 'Failed to save address');
+      toast.error(err.message || 'Failed to save address');
     } finally {
       setSaving(false);
     }

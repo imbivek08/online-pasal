@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import RatingStars from './RatingStars';
 import type { CreateReviewRequest, Order } from '../lib/api';
 import { useApi } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 
 interface WriteReviewModalProps {
   productId: string;
@@ -20,6 +21,7 @@ export default function WriteReviewModal({
   onSubmit
 }: WriteReviewModalProps) {
   const api = useApi();
+  const toast = useToast();
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState('');
   const [comment, setComment] = useState('');
@@ -60,7 +62,7 @@ export default function WriteReviewModal({
     e.preventDefault();
     
     if (!selectedOrderId) {
-      alert('Please select an order to review');
+      toast.warning('Please select an order to review');
       return;
     }
 
@@ -77,7 +79,7 @@ export default function WriteReviewModal({
       onClose();
     } catch (error) {
       console.error('Failed to submit review:', error);
-      alert('Failed to submit review. Please try again.');
+      toast.error('Failed to submit review. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

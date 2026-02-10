@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Star } from 'lucide-react';
 import { api, type Product, type ProductRatingStats } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [adding, setAdding] = useState(false);
   const [ratingStats, setRatingStats] = useState<ProductRatingStats | null>(null);
   const { addToCart } = useCart();
+  const toast = useToast();
 
   useEffect(() => {
     api.getProductRatingStats(product.id)
@@ -138,7 +140,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   // Optional: Show success toast/notification
                 } catch (error) {
                   console.error('Failed to add to cart:', error);
-                  alert('Failed to add to cart. Please try again.');
+                  toast.error('Failed to add to cart. Please try again.');
                 } finally {
                   setAdding(false);
                 }

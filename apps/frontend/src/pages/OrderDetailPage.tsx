@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, CreditCard, ChevronLeft, XCircle } from 'lucide-react';
+import {  MapPin, CreditCard, ChevronLeft, XCircle } from 'lucide-react';
 import { useApi } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import type { Order } from '../lib/api';
 
 const statusColors = {
@@ -20,6 +21,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const api = useApi();
+  const toast = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -41,7 +43,7 @@ export default function OrderDetailPage() {
       }
     } catch (error) {
       console.error('Failed to fetch order:', error);
-      alert('Failed to load order details');
+      toast.error('Failed to load order details');
       navigate('/orders');
     } finally {
       setLoading(false);
@@ -57,12 +59,12 @@ export default function OrderDetailPage() {
     try {
       const response = await api.cancelOrder(order.id);
       if (response.success) {
-        alert('Order cancelled successfully');
+        toast.success('Order cancelled successfully');
         fetchOrder();
       }
     } catch (error: any) {
       console.error('Failed to cancel order:', error);
-      alert(error.message || 'Failed to cancel order');
+      toast.error(error.message || 'Failed to cancel order');
     } finally {
       setCancelling(false);
     }
@@ -96,7 +98,7 @@ export default function OrderDetailPage() {
   }
 
   const currentStatusIndex = statusSteps.indexOf(order.status);
-  const canCancel = order.status === 'pending' || order.status === 'confirmed';
+  const canCancel = order.status === 'confirmed';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

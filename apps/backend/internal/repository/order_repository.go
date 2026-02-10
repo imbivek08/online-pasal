@@ -316,6 +316,22 @@ func (r *OrderRepository) UpdateStatusWithTimestamp(ctx context.Context, orderID
 	return nil
 }
 
+// UpdatePaymentStatus updates the payment status of an order
+func (r *OrderRepository) UpdatePaymentStatus(ctx context.Context, orderID uuid.UUID, status model.PaymentStatus) error {
+	query := `UPDATE orders SET payment_status = $1, updated_at = NOW() WHERE id = $2`
+
+	result, err := r.db.Pool.Exec(ctx, query, status, orderID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("order not found")
+	}
+
+	return nil
+}
+
 // CreateAddress creates a new address
 func (r *OrderRepository) CreateAddress(ctx context.Context, address *model.Address) error {
 	query := `

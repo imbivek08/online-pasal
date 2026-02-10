@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { api } from '../lib/api';
 import type { Product, ProductRatingStats, CreateReviewRequest, Review } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
 import ProductCard from '../components/ProductCard';
 import ProductRatingSummary from '../components/ProductRatingSummary';
 import ReviewCard from '../components/ReviewCard';
@@ -15,6 +16,7 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
   const { addToCart } = useCart();
+  const toast = useToast();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,7 +161,7 @@ export default function ProductDetailPage() {
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (error) {
       console.error('Failed to add to cart:', error);
-      alert('Failed to add to cart. Please try again.');
+      toast.error('Failed to add to cart. Please try again.');
     } finally {
       setAdding(false);
     }

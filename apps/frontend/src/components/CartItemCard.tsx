@@ -1,6 +1,7 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { CartItem } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 
 interface CartItemCardProps {
   item: CartItem;
@@ -11,10 +12,11 @@ interface CartItemCardProps {
 export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartItemCardProps) {
   const [updating, setUpdating] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const toast = useToast();
 
   const handleIncrease = async () => {
     if (item.quantity >= item.stock_quantity) {
-      alert('Cannot add more than available stock');
+      toast.warning('Cannot add more than available stock');
       return;
     }
     setUpdating(true);
@@ -22,7 +24,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
       await onUpdateQuantity(item.id, item.quantity + 1);
     } catch (error) {
       console.error('Failed to update quantity:', error);
-      alert('Failed to update quantity');
+      toast.error('Failed to update quantity');
     } finally {
       setUpdating(false);
     }
@@ -37,22 +39,19 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
       await onUpdateQuantity(item.id, item.quantity - 1);
     } catch (error) {
       console.error('Failed to update quantity:', error);
-      alert('Failed to update quantity');
+      toast.error('Failed to update quantity');
     } finally {
       setUpdating(false);
     }
   };
 
   const handleRemove = async () => {
-    if (!confirm('Remove this item from cart?')) {
-      return;
-    }
     setRemoving(true);
     try {
       await onRemove(item.id);
     } catch (error) {
       console.error('Failed to remove item:', error);
-      alert('Failed to remove item');
+      toast.error('Failed to remove item');
     } finally {
       setRemoving(false);
     }

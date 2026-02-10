@@ -78,6 +78,13 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 			return nil, fmt.Errorf("shipping address not found")
 		}
 	} else if req.ShippingAddress != nil {
+		// If marking as default, unset existing defaults first
+		if req.ShippingAddress.IsDefault {
+			if err := s.addressRepo.UnsetDefaultForUser(ctx, userID); err != nil {
+				return nil, fmt.Errorf("failed to unset default address: %w", err)
+			}
+		}
+
 		// Create a new address from the provided input
 		shippingAddress = &model.Address{
 			ID:           uuid.New(),
@@ -90,7 +97,7 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 			State:        req.ShippingAddress.State,
 			PostalCode:   req.ShippingAddress.PostalCode,
 			Country:      req.ShippingAddress.Country,
-			IsDefault:    false,
+			IsDefault:    req.ShippingAddress.IsDefault,
 			AddressType:  "shipping",
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
@@ -291,9 +298,56 @@ func (s *OrderService) GetVendorOrders(ctx context.Context, shopID uuid.UUID) ([
 	return s.orderRepo.GetByShopID(ctx, shopID)
 }
 
-// UpdateOrderStatus updates order status (vendor/admin only)
+// validStatusTransitions defines the allowed order status flow
+var validStatusTransitions = map[model.OrderStatus][]model.OrderStatus{
+	model.OrderStatusPending:    {model.OrderStatusConfirmed, model.OrderStatusCancelled},
+	model.OrderStatusConfirmed:  {model.OrderStatusProcessing, model.OrderStatusCancelled},
+	model.OrderStatusProcessing: {model.OrderStatusShipped, model.OrderStatusCancelled},
+	model.OrderStatusShipped:    {model.OrderStatusDelivered},
+	model.OrderStatusDelivered:  {model.OrderStatusRefunded},
+	model.OrderStatusCancelled:  {},
+	model.OrderStatusRefunded:   {},
+}
+
+func isValidStatusTransition(from, to model.OrderStatus) bool {
+	allowed, ok := validStatusTransitions[from]
+	if !ok {
+		return false
+	}
+	for _, s := range allowed {
+		if s == to {
+			return true
+		}
+	}
+	return false
+}
+
+// UpdateOrderStatus updates order status with transition validation (vendor/admin only)
 func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status model.OrderStatus) error {
-	return s.orderRepo.UpdateStatusWithTimestamp(ctx, orderID, status)
+	// Get current order to validate transition
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("order not found")
+	}
+
+	// Validate the status transition
+	if !isValidStatusTransition(order.Status, status) {
+		return fmt.Errorf("invalid status transition: cannot move from '%s' to '%s'", order.Status, status)
+	}
+
+	// Update the order status
+	if err := s.orderRepo.UpdateStatusWithTimestamp(ctx, orderID, status); err != nil {
+		return err
+	}
+
+	// For COD orders, automatically mark payment as paid when delivered
+	if status == model.OrderStatusDelivered && order.PaymentMethod != nil && *order.PaymentMethod == "COD" {
+		if err := s.orderRepo.UpdatePaymentStatus(ctx, orderID, model.PaymentStatusPaid); err != nil {
+			return fmt.Errorf("failed to update payment status: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // CancelOrder cancels an order and restores stock

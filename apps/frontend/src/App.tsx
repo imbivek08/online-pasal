@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import { CartProvider } from './contexts/CartContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
@@ -20,6 +21,7 @@ import AddressesPage from './pages/AddressesPage';
 function App() {
   return (
     <BrowserRouter>
+      <ToastProvider>
       <CartProvider>
         <div className="flex flex-col min-h-screen">
           <Navbar />
@@ -152,6 +154,7 @@ function App() {
           <Footer />
         </div>
       </CartProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
