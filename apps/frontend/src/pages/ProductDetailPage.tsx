@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Package, CheckCircle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Package, CheckCircle, Star } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
-import   { api,  } from '../lib/api';
-import type { Product } from '../lib/api';
+import { api } from '../lib/api';
+import type { Product, ProductRatingStats, CreateReviewRequest, Review } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
 import ProductCard from '../components/ProductCard';
+import ProductRatingSummary from '../components/ProductRatingSummary';
+import ReviewCard from '../components/ReviewCard';
+import WriteReviewModal from '../components/WriteReviewModal';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const { addToCart } = useCart();
   
   const [product, setProduct] = useState<Product | null>(null);
@@ -20,6 +23,15 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  
+  // Review states
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [ratingStats, setRatingStats] = useState<ProductRatingStats | null>(null);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -62,6 +74,80 @@ export default function ProductDetailPage() {
 
     fetchProduct();
   }, [id, getToken]);
+
+  // Fetch reviews and rating stats
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id) return;
+
+      try {
+        setLoadingReviews(true);
+        
+        // Fetch reviews
+        const reviewsData = await api.getProductReviews(id, reviewsPage, 10);
+        setReviews(reviewsData.reviews);
+        setTotalReviews(reviewsData.total_reviews);
+
+        // Fetch rating stats
+        const stats = await api.getProductRatingStats(id);
+        setRatingStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    fetchReviews();
+  }, [id, reviewsPage]);
+
+  const handleWriteReview = async (reviewData: CreateReviewRequest) => {
+    try {
+      const token = await getToken();
+      if (token) {
+        api.setAuth(getToken);
+      }
+      
+      await api.createReview(reviewData);
+      
+      // Refresh reviews after submission
+      if (id) {
+        const reviewsData = await api.getProductReviews(id, 1, 10);
+        setReviews(reviewsData.reviews);
+        setTotalReviews(reviewsData.total_reviews);
+
+        const stats = await api.getProductRatingStats(id);
+        setRatingStats(stats);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleMarkHelpful = async (reviewId: string) => {
+    try {
+      const token = await getToken();
+      if (token) {
+        api.setAuth(getToken);
+        await api.markReviewHelpful(reviewId);
+        
+        // Refresh reviews to show updated helpful count
+        if (id) {
+          const reviewsData = await api.getProductReviews(id, reviewsPage, 10);
+          setReviews(reviewsData.reviews);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to mark review as helpful:', error);
+    }
+  };
+
+  const handleOpenWriteReview = () => {
+    // For testing, use a hardcoded order ID
+    // In production, you should fetch user's orders and let them select
+    setSelectedOrderId('');
+    setShowWriteReviewModal(true);
+  };
 
   const handleAddToCart = async () => {
     if (!product || product.stock_quantity === 0) return;
@@ -298,6 +384,84 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
+        {/* Reviews Section */}
+        <div className="mt-12">
+          <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-10">
+            {/* Rating Summary */}
+            {ratingStats && <ProductRatingSummary stats={ratingStats} />}
+
+            {/* Write Review Button */}
+            {isSignedIn && (
+              <div className="mb-8">
+                <button
+                  onClick={handleOpenWriteReview}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+                >
+                  <Star className="w-5 h-5" />
+                  Write a Review
+                </button>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            <div>
+              <h3 className="text-xl font-semibold mb-6">Customer Reviews</h3>
+              
+              {loadingReviews ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              ) : reviews.length > 0 ? (
+                <>
+                  {reviews.map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      onMarkHelpful={handleMarkHelpful}
+                    />
+                  ))}
+                  
+                  {/* Pagination */}
+                  {totalReviews > 10 && (
+                    <div className="flex justify-center gap-2 mt-8">
+                      <button
+                        onClick={() => setReviewsPage(Math.max(1, reviewsPage - 1))}
+                        disabled={reviewsPage === 1}
+                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-4 py-2 text-gray-700">
+                        Page {reviewsPage} of {Math.ceil(totalReviews / 10)}
+                      </span>
+                      <button
+                        onClick={() => setReviewsPage(reviewsPage + 1)}
+                        disabled={reviewsPage >= Math.ceil(totalReviews / 10)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-6xl mb-4">💬</div>
+                  <p className="text-gray-600 mb-4">No reviews yet</p>
+                  {isSignedIn && (
+                    <button
+                      onClick={handleOpenWriteReview}
+                      className="text-primary hover:text-primary/80 font-medium"
+                    >
+                      Be the first to review this product
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-12">
@@ -310,6 +474,17 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Write Review Modal */}
+      {showWriteReviewModal && product && (
+        <WriteReviewModal
+          productId={product.id}
+          productName={product.name}
+          orderId={selectedOrderId}
+          onClose={() => setShowWriteReviewModal(false)}
+          onSubmit={handleWriteReview}
+        />
+      )}
     </div>
   );
 }

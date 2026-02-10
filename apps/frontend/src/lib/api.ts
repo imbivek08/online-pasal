@@ -195,6 +195,61 @@ export interface UpdateOrderStatusRequest {
   status: string;
 }
 
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  order_id?: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  is_verified_purchase: boolean;
+  is_approved: boolean;
+  helpful_count: number;
+  created_at: string;
+  updated_at: string;
+  user_name?: string;
+  user_avatar?: string;
+}
+
+export interface CreateReviewRequest {
+  product_id: string;
+  order_id: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+}
+
+export interface UpdateReviewRequest {
+  rating?: number;
+  title?: string;
+  comment?: string;
+}
+
+export interface ProductRatingStats {
+  product_id: string;
+  average_rating: number;
+  total_reviews: number;
+  five_star_count: number;
+  four_star_count: number;
+  three_star_count: number;
+  two_star_count: number;
+  one_star_count: number;
+}
+
+export interface ReviewListResponse {
+  reviews: Review[];
+  total_reviews: number;
+  page: number;
+  limit: number;
+}
+
+export interface CanReviewResponse {
+  can_review: boolean;
+  reason?: string;
+  existing_review_id?: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -381,6 +436,54 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+  }
+
+  // Review APIs
+  async createReview(data: CreateReviewRequest): Promise<Review> {
+    const response = await this.request('/api/v1/reviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data as Review;
+  }
+
+  async getProductReviews(productId: string, page: number = 1, limit: number = 10): Promise<ReviewListResponse> {
+    const response = await this.request(`/api/v1/reviews/product/${productId}?page=${page}&limit=${limit}`);
+    return response.data as ReviewListResponse;
+  }
+
+  async getProductRatingStats(productId: string): Promise<ProductRatingStats> {
+    const response = await this.request(`/api/v1/reviews/product/${productId}/stats`);
+    return response.data as ProductRatingStats;
+  }
+
+  async getReviewById(reviewId: string): Promise<Review> {
+    const response = await this.request(`/api/v1/reviews/${reviewId}`);
+    return response.data as Review;
+  }
+
+  async updateReview(reviewId: string, data: UpdateReviewRequest): Promise<void> {
+    await this.request(`/api/v1/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteReview(reviewId: string): Promise<void> {
+    await this.request(`/api/v1/reviews/${reviewId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async markReviewHelpful(reviewId: string): Promise<void> {
+    await this.request(`/api/v1/reviews/${reviewId}/helpful`, {
+      method: 'POST',
+    });
+  }
+
+  async canUserReviewProduct(productId: string): Promise<CanReviewResponse> {
+    const response = await this.request(`/api/v1/reviews/can-review/${productId}`);
+    return response.data as CanReviewResponse;
   }
 }
 
