@@ -14,17 +14,20 @@ type OrderService struct {
 	orderRepo   *repository.OrderRepository
 	cartRepo    *repository.CartRepository
 	productRepo *repository.ProductRepository
+	addressRepo *repository.AddressRepository
 }
 
 func NewOrderService(
 	orderRepo *repository.OrderRepository,
 	cartRepo *repository.CartRepository,
 	productRepo *repository.ProductRepository,
+	addressRepo *repository.AddressRepository,
 ) *OrderService {
 	return &OrderService{
 		orderRepo:   orderRepo,
 		cartRepo:    cartRepo,
 		productRepo: productRepo,
+		addressRepo: addressRepo,
 	}
 }
 
@@ -62,26 +65,42 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 		}
 	}
 
-	// Create shipping address
-	shippingAddress := &model.Address{
-		ID:           uuid.New(),
-		UserID:       userID,
-		FullName:     req.ShippingAddress.FullName,
-		Phone:        req.ShippingAddress.Phone,
-		AddressLine1: req.ShippingAddress.AddressLine1,
-		AddressLine2: req.ShippingAddress.AddressLine2,
-		City:         req.ShippingAddress.City,
-		State:        req.ShippingAddress.State,
-		PostalCode:   req.ShippingAddress.PostalCode,
-		Country:      req.ShippingAddress.Country,
-		IsDefault:    false,
-		AddressType:  "shipping",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-	}
+	// Resolve shipping address
+	var shippingAddress *model.Address
 
-	if err := s.orderRepo.CreateAddress(ctx, shippingAddress); err != nil {
-		return nil, fmt.Errorf("failed to create shipping address: %w", err)
+	if req.ShippingAddressID != nil {
+		// Use an existing saved address
+		shippingAddress, err = s.addressRepo.GetByID(ctx, *req.ShippingAddressID)
+		if err != nil {
+			return nil, fmt.Errorf("shipping address not found")
+		}
+		if shippingAddress.UserID != userID {
+			return nil, fmt.Errorf("shipping address not found")
+		}
+	} else if req.ShippingAddress != nil {
+		// Create a new address from the provided input
+		shippingAddress = &model.Address{
+			ID:           uuid.New(),
+			UserID:       userID,
+			FullName:     req.ShippingAddress.FullName,
+			Phone:        req.ShippingAddress.Phone,
+			AddressLine1: req.ShippingAddress.AddressLine1,
+			AddressLine2: req.ShippingAddress.AddressLine2,
+			City:         req.ShippingAddress.City,
+			State:        req.ShippingAddress.State,
+			PostalCode:   req.ShippingAddress.PostalCode,
+			Country:      req.ShippingAddress.Country,
+			IsDefault:    false,
+			AddressType:  "shipping",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+
+		if err := s.orderRepo.CreateAddress(ctx, shippingAddress); err != nil {
+			return nil, fmt.Errorf("failed to create shipping address: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("shipping address is required: provide shipping_address_id or shipping_address")
 	}
 
 	// Create billing address

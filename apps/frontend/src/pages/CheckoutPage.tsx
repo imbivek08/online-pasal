@@ -1,38 +1,105 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, CheckCircle } from 'lucide-react';
+import { CreditCard, Truck, CheckCircle, MapPin, Home } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useApi } from '../lib/api';
-import type { AddressInput } from '../lib/api';
+import type { Address, AddressInput } from '../lib/api';
+
+const emptyAddress: AddressInput = {
+  full_name: '',
+  phone: '',
+  address_line1: '',
+  address_line2: '',
+  city: '',
+  state: '',
+  postal_code: '',
+  country: 'Nepal',
+};
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cart } = useCart();
   const api = useApi();
 
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  // Shipping address form
-  const [shippingAddress, setShippingAddress] = useState<AddressInput>({
-    full_name: '',
-    phone: '',
-    address_line1: '',
-    address_line2: '',
-    city: '',
-    state: '',
-    postal_code: '',
-    country: 'Nepal',
-  });
+  const [addressLoading, setAddressLoading] = useState(true);
 
-  // Payment details
+  // Address mode: 'saved' uses an existing address ID, 'new' sends inline form
+  const [savedAddress, setSavedAddress] = useState<Address | null>(null);
+  const [addressMode, setAddressMode] = useState<'saved' | 'new'>('new');
+  const [formAddress, setFormAddress] = useState<AddressInput>(emptyAddress);
+
+  // Payment & notes
   const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
   const [useSameAddress, setUseSameAddress] = useState(true);
   const [notes, setNotes] = useState('');
 
+  // Load best available address on mount: default → latest → empty
+  useEffect(() => {
+    loadSavedAddress();
+  }, []);
+
+  const loadSavedAddress = async () => {
+    setAddressLoading(true);
+    try {
+      // First try the default address
+      const defaultResp = await api.getDefaultAddress();
+      if (defaultResp.data) {
+        setSavedAddress(defaultResp.data);
+        setAddressMode('saved');
+        populateFormFromAddress(defaultResp.data);
+        setAddressLoading(false);
+        return;
+      }
+
+      // No default — fall back to the latest address from the list
+      const allResp = await api.getAddresses();
+      const addresses = allResp.data || [];
+      if (addresses.length > 0) {
+        // Already sorted by is_default DESC, created_at DESC on the backend
+        setSavedAddress(addresses[0]);
+        setAddressMode('saved');
+        populateFormFromAddress(addresses[0]);
+        setAddressLoading(false);
+        return;
+      }
+
+      // No addresses at all — new user
+      setAddressMode('new');
+    } catch {
+      setAddressMode('new');
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const populateFormFromAddress = (addr: Address) => {
+    setFormAddress({
+      full_name: addr.full_name,
+      phone: addr.phone,
+      address_line1: addr.address_line1,
+      address_line2: addr.address_line2 || '',
+      city: addr.city,
+      state: addr.state || '',
+      postal_code: addr.postal_code || '',
+      country: addr.country,
+    });
+  };
+
+  const switchToSaved = () => {
+    if (!savedAddress) return;
+    setAddressMode('saved');
+    populateFormFromAddress(savedAddress);
+  };
+
+  const switchToNew = () => {
+    setAddressMode('new');
+    setFormAddress(emptyAddress);
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!cart || cart.items.length === 0) {
       alert('Your cart is empty');
       return;
@@ -40,12 +107,24 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
-      const response = await api.createOrder({
-        shipping_address: shippingAddress,
+      const orderPayload: any = {
         payment_method: paymentMethod,
         use_same_address: useSameAddress,
         notes: notes || undefined,
-      });
+      };
+
+      if (addressMode === 'saved' && savedAddress) {
+        orderPayload.shipping_address_id = savedAddress.id;
+      } else {
+        if (!formAddress.full_name || !formAddress.phone || !formAddress.address_line1 || !formAddress.city || !formAddress.country) {
+          alert('Please fill in all required address fields');
+          setLoading(false);
+          return;
+        }
+        orderPayload.shipping_address = formAddress;
+      }
+
+      const response = await api.createOrder(orderPayload);
 
       if (response.success && response.data) {
         alert('Order placed successfully!');
@@ -84,17 +163,17 @@ export default function CheckoutPage() {
         {/* Progress Steps */}
         <div className="mb-8 flex items-center justify-center">
           <div className="flex items-center">
-            <div className={`flex items-center ${step >= 1 ? 'text-green-600' : 'text-gray-400'}`}>
+            <div className="flex items-center text-green-600">
               <Truck className="w-6 h-6" />
               <span className="ml-2 font-medium">Shipping</span>
             </div>
             <div className="w-16 h-1 mx-4 bg-gray-300"></div>
-            <div className={`flex items-center ${step >= 2 ? 'text-green-600' : 'text-gray-400'}`}>
+            <div className="flex items-center text-gray-400">
               <CreditCard className="w-6 h-6" />
               <span className="ml-2 font-medium">Payment</span>
             </div>
             <div className="w-16 h-1 mx-4 bg-gray-300"></div>
-            <div className={`flex items-center ${step >= 3 ? 'text-green-600' : 'text-gray-400'}`}>
+            <div className="flex items-center text-gray-400">
               <CheckCircle className="w-6 h-6" />
               <span className="ml-2 font-medium">Review</span>
             </div>
@@ -104,89 +183,140 @@ export default function CheckoutPage() {
         <form onSubmit={handleSubmitOrder}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               {/* Shipping Address */}
-              <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h2 className="text-xl font-bold mb-4">Shipping Address</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={shippingAddress.full_name}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, full_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                    <input
-                      type="tel"
-                      required
-                      value={shippingAddress.phone}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
-                    <input
-                      type="text"
-                      required
-                      value={shippingAddress.address_line1}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, address_line1: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.address_line2}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, address_line2: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                    <input
-                      type="text"
-                      required
-                      value={shippingAddress.city}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.state}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.postal_code}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, postal_code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                    <input
-                      type="text"
-                      required
-                      value={shippingAddress.country}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                </div>
+
+                {addressLoading ? (
+                  <div className="text-center py-8 text-gray-500">Loading address...</div>
+                ) : (
+                  <>
+                    {/* Mode Toggle Buttons */}
+                    {savedAddress && (
+                      <div className="flex gap-3 mb-5">
+                        <button
+                          type="button"
+                          onClick={switchToSaved}
+                          className={`flex-1 flex items-center justify-center gap-2.5 p-4 rounded-lg border-2 transition-all ${
+                            addressMode === 'saved'
+                              ? 'border-green-500 bg-green-50 text-green-700'
+                              : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Home className="w-5 h-5" />
+                          <div className="text-left">
+                            <span className="font-medium text-sm block">{savedAddress.is_default ? 'Default Address' : 'Last Shipped Address'}</span>
+                            <span className="text-xs opacity-70">{savedAddress.address_line1}, {savedAddress.city}</span>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={switchToNew}
+                          className={`flex-1 flex items-center justify-center gap-2.5 p-4 rounded-lg border-2 transition-all ${
+                            addressMode === 'new'
+                              ? 'border-green-500 bg-green-50 text-green-700'
+                              : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <MapPin className="w-5 h-5" />
+                          <span className="font-medium text-sm">Ship to New Location</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Address Form (always visible, pre-filled or empty based on mode) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formAddress.full_name}
+                          onChange={(e) => setFormAddress({ ...formAddress, full_name: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                        <input
+                          type="tel"
+                          required
+                          value={formAddress.phone}
+                          onChange={(e) => setFormAddress({ ...formAddress, phone: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formAddress.address_line1}
+                          onChange={(e) => setFormAddress({ ...formAddress, address_line1: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          placeholder="Street address, house number"
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
+                        <input
+                          type="text"
+                          value={formAddress.address_line2}
+                          onChange={(e) => setFormAddress({ ...formAddress, address_line2: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          placeholder="Apartment, suite, unit, etc."
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formAddress.city}
+                          onChange={(e) => setFormAddress({ ...formAddress, city: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">State / Province</label>
+                        <input
+                          type="text"
+                          value={formAddress.state}
+                          onChange={(e) => setFormAddress({ ...formAddress, state: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                        <input
+                          type="text"
+                          value={formAddress.postal_code}
+                          onChange={(e) => setFormAddress({ ...formAddress, postal_code: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formAddress.country}
+                          onChange={(e) => setFormAddress({ ...formAddress, country: e.target.value })}
+                          readOnly={addressMode === 'saved'}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${addressMode === 'saved' ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="mt-4">
                   <label className="flex items-center">
@@ -202,7 +332,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Payment Method */}
-              <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h2 className="text-xl font-bold mb-4">Payment Method</h2>
                 <div className="space-y-3">
                   <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
@@ -256,7 +386,7 @@ export default function CheckoutPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-lg border border-gray-200 sticky top-8">
+              <div className="bg-white p-6 rounded-lg border border-gray-200 sticky top-20">
                 <h2 className="text-xl font-bold mb-4">Order Summary</h2>
                 
                 <div className="space-y-3 mb-6 max-h-60 overflow-y-auto">

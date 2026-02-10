@@ -176,6 +176,40 @@ export default function DashboardPage() {
             ) : null}
           </div>
 
+          {/* Quick Links */}
+          {profile && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <button
+                onClick={() => navigate('/orders')}
+                className="bg-white rounded-xl shadow p-4 text-center hover:shadow-md transition-shadow border border-gray-100"
+              >
+                <span className="text-2xl mb-1 block">📦</span>
+                <span className="text-sm font-medium text-gray-700">My Orders</span>
+              </button>
+              <button
+                onClick={() => navigate('/addresses')}
+                className="bg-white rounded-xl shadow p-4 text-center hover:shadow-md transition-shadow border border-gray-100"
+              >
+                <span className="text-2xl mb-1 block">📍</span>
+                <span className="text-sm font-medium text-gray-700">Addresses</span>
+              </button>
+              <button
+                onClick={() => navigate('/cart')}
+                className="bg-white rounded-xl shadow p-4 text-center hover:shadow-md transition-shadow border border-gray-100"
+              >
+                <span className="text-2xl mb-1 block">🛒</span>
+                <span className="text-sm font-medium text-gray-700">My Cart</span>
+              </button>
+              <button
+                onClick={() => navigate('/products')}
+                className="bg-white rounded-xl shadow p-4 text-center hover:shadow-md transition-shadow border border-gray-100"
+              >
+                <span className="text-2xl mb-1 block">🛍️</span>
+                <span className="text-sm font-medium text-gray-700">Browse</span>
+              </button>
+            </div>
+          )}
+
           {/* Become Vendor Card (Only for customers) */}
           {profile && profile.role === 'customer' && (
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl sm:rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border-2 border-purple-200">

@@ -151,6 +151,7 @@ export interface AddressInput {
   state?: string;
   postal_code?: string;
   country: string;
+  is_default?: boolean;
 }
 
 export interface OrderItem {
@@ -191,7 +192,8 @@ export interface Order {
 }
 
 export interface CreateOrderRequest {
-  shipping_address: AddressInput;
+  shipping_address_id?: string;
+  shipping_address?: AddressInput;
   billing_address?: AddressInput;
   payment_method: string;
   use_same_address: boolean;
@@ -448,6 +450,45 @@ class ApiClient {
     return this.request(`/api/v1/vendor/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    });
+  }
+
+  // Address endpoints
+  async getAddresses(): Promise<ApiResponse<Address[]>> {
+    return this.request('/api/v1/addresses');
+  }
+
+  async getDefaultAddress(): Promise<ApiResponse<Address | null>> {
+    return this.request('/api/v1/addresses/default');
+  }
+
+  async getAddressById(id: string): Promise<ApiResponse<Address>> {
+    return this.request(`/api/v1/addresses/${id}`);
+  }
+
+  async createAddress(data: AddressInput): Promise<ApiResponse<Address>> {
+    return this.request('/api/v1/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAddress(id: string, data: AddressInput): Promise<ApiResponse<Address>> {
+    return this.request(`/api/v1/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAddress(id: string): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/addresses/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async setDefaultAddress(id: string): Promise<ApiResponse<null>> {
+    return this.request(`/api/v1/addresses/${id}/default`, {
+      method: 'PATCH',
     });
   }
 

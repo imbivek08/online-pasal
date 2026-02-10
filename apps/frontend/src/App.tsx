@@ -15,6 +15,7 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import VendorOrdersPage from './pages/VendorOrdersPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import AddressesPage from './pages/AddressesPage';
 
 function App() {
   return (
@@ -80,6 +81,20 @@ function App() {
               <>
                 <SignedIn>
                   <CheckoutPage />
+                </SignedIn>
+                <SignedOut>
+                  <Navigate to="/sign-in" replace />
+                </SignedOut>
+              </>
+            }
+          />
+
+          <Route
+            path="/addresses"
+            element={
+              <>
+                <SignedIn>
+                  <AddressesPage />
                 </SignedIn>
                 <SignedOut>
                   <Navigate to="/sign-in" replace />

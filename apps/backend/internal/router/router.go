@@ -27,14 +27,16 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	cartRepo := repository.NewCartRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 	reviewRepo := repository.NewReviewRepository(db)
+	addressRepo := repository.NewAddressRepository(db)
 
 	// Initialize services
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	shopService := service.NewShopService(shopRepo, userRepo)
 	cartService := service.NewCartService(cartRepo, productRepo)
-	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
+	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo, addressRepo)
 	reviewService := service.NewReviewService(reviewRepo, orderRepo, productRepo)
+	addressService := service.NewAddressService(addressRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
@@ -45,6 +47,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	cartHandler := handler.NewCartHandler(cartService, userService)
 	orderHandler := handler.NewOrderHandler(orderService, userService, shopService)
 	reviewHandler := handler.NewReviewHandler(reviewService, userService)
+	addressHandler := handler.NewAddressHandler(addressService, userService)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")
@@ -80,6 +83,9 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 
 	// Review routes
 	setupReviewRoutes(v1, reviewHandler, authMiddleware, loadUserMiddleware)
+
+	// Address routes
+	setupAddressRoutes(v1, addressHandler, authMiddleware, loadUserMiddleware)
 }
 
 func healthCheck(c echo.Context) error {
@@ -174,4 +180,16 @@ func setupReviewRoutes(g *echo.Group, reviewHandler *handler.ReviewHandler, auth
 	protected.DELETE("/:id", reviewHandler.DeleteReview)                        // Delete review
 	protected.POST("/:id/helpful", reviewHandler.MarkReviewHelpful)             // Mark review as helpful
 	protected.GET("/can-review/:productId", reviewHandler.CanUserReviewProduct) // Check if can review
+}
+
+func setupAddressRoutes(g *echo.Group, addressHandler *handler.AddressHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+	addresses := g.Group("/addresses", authMiddleware, loadUserMiddleware)
+
+	addresses.GET("", addressHandler.GetAddresses)                    // List all addresses
+	addresses.GET("/default", addressHandler.GetDefaultAddress)       // Get default address
+	addresses.GET("/:id", addressHandler.GetAddress)                  // Get address by ID
+	addresses.POST("", addressHandler.CreateAddress)                  // Create address
+	addresses.PUT("/:id", addressHandler.UpdateAddress)               // Update address
+	addresses.DELETE("/:id", addressHandler.DeleteAddress)            // Delete address
+	addresses.PATCH("/:id/default", addressHandler.SetDefaultAddress) // Set default
 }

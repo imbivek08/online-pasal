@@ -98,14 +98,15 @@ type Address struct {
 
 // CreateOrderRequest represents request to create an order from cart
 type CreateOrderRequest struct {
-	ShippingAddress AddressInput  `json:"shipping_address" validate:"required"`
-	BillingAddress  *AddressInput `json:"billing_address,omitempty"`
-	PaymentMethod   string        `json:"payment_method" validate:"required"`
-	UseSameAddress  bool          `json:"use_same_address"` // Use shipping as billing
-	Notes           *string       `json:"notes,omitempty"`
+	ShippingAddressID *uuid.UUID    `json:"shipping_address_id,omitempty"` // Use existing saved address
+	ShippingAddress   *AddressInput `json:"shipping_address,omitempty"`    // Or provide new address
+	BillingAddress    *AddressInput `json:"billing_address,omitempty"`
+	PaymentMethod     string        `json:"payment_method" validate:"required"`
+	UseSameAddress    bool          `json:"use_same_address"` // Use shipping as billing
+	Notes             *string       `json:"notes,omitempty"`
 }
 
-// AddressInput represents address input for order creation
+// AddressInput represents address input for order creation and address management
 type AddressInput struct {
 	FullName     string  `json:"full_name" validate:"required"`
 	Phone        string  `json:"phone" validate:"required"`
@@ -115,6 +116,7 @@ type AddressInput struct {
 	State        *string `json:"state,omitempty"`
 	PostalCode   *string `json:"postal_code,omitempty"`
 	Country      string  `json:"country" validate:"required"`
+	IsDefault    bool    `json:"is_default"`
 }
 
 // UpdateOrderStatusRequest represents request to update order status
