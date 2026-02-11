@@ -1,6 +1,8 @@
 package router
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -37,6 +39,14 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo, addressRepo)
 	reviewService := service.NewReviewService(reviewRepo, orderRepo, productRepo)
 	addressService := service.NewAddressService(addressRepo)
+	stripeService := service.NewStripeService(
+		cfg.StripeSecretKey,
+		cfg.FrontendURL,
+		orderRepo,
+		cartRepo,
+		productRepo,
+		addressRepo,
+	)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)
@@ -48,6 +58,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	orderHandler := handler.NewOrderHandler(orderService, userService, shopService)
 	reviewHandler := handler.NewReviewHandler(reviewService, userService)
 	addressHandler := handler.NewAddressHandler(addressService, userService)
+	stripeHandler := handler.NewStripeHandler(stripeService, orderService, userService, cfg.StripeWebhookSecret)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")
@@ -55,6 +66,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	// Webhook routes (no auth required)
 	webhooks := v1.Group("/webhooks")
 	webhooks.POST("/clerk", webhookHandler.HandleClerkWebhook)
+	webhooks.POST("/stripe", stripeHandler.HandleStripeWebhook, saveRawBody())
 
 	// Auth middleware for protected routes
 	authMiddleware := middleware.ClerkAuthMiddleware(cfg)
@@ -79,7 +91,7 @@ func SetupRoutes(e *echo.Echo, db *database.Database, cfg *config.Config) {
 	setupCartRoutes(v1, cartHandler, authMiddleware, loadUserMiddleware)
 
 	// Order routes
-	setupOrderRoutes(v1, orderHandler, authMiddleware, loadUserMiddleware)
+	setupOrderRoutes(v1, orderHandler, stripeHandler, authMiddleware, loadUserMiddleware)
 
 	// Review routes
 	setupReviewRoutes(v1, reviewHandler, authMiddleware, loadUserMiddleware)
@@ -151,7 +163,7 @@ func setupCartRoutes(g *echo.Group, cartHandler *handler.CartHandler, authMiddle
 	cart.DELETE("", cartHandler.ClearCart)                // Clear entire cart
 }
 
-func setupOrderRoutes(g *echo.Group, orderHandler *handler.OrderHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
+func setupOrderRoutes(g *echo.Group, orderHandler *handler.OrderHandler, stripeHandler *handler.StripeHandler, authMiddleware, loadUserMiddleware echo.MiddlewareFunc) {
 	orders := g.Group("/orders", authMiddleware, loadUserMiddleware)
 
 	// Customer order routes
@@ -159,6 +171,10 @@ func setupOrderRoutes(g *echo.Group, orderHandler *handler.OrderHandler, authMid
 	orders.GET("", orderHandler.GetOrders)               // Get user's orders
 	orders.GET("/:id", orderHandler.GetOrderByID)        // Get order details
 	orders.POST("/:id/cancel", orderHandler.CancelOrder) // Cancel order
+
+	// Stripe checkout routes
+	orders.POST("/checkout/stripe", stripeHandler.CreateCheckoutSession) // Create Stripe checkout
+	orders.GET("/checkout/verify", stripeHandler.VerifySession)          // Verify Stripe session
 
 	// Vendor order routes
 	vendor := g.Group("/vendor", authMiddleware, loadUserMiddleware, middleware.RequireVendor())
@@ -192,4 +208,23 @@ func setupAddressRoutes(g *echo.Group, addressHandler *handler.AddressHandler, a
 	addresses.PUT("/:id", addressHandler.UpdateAddress)               // Update address
 	addresses.DELETE("/:id", addressHandler.DeleteAddress)            // Delete address
 	addresses.PATCH("/:id/default", addressHandler.SetDefaultAddress) // Set default
+}
+
+// saveRawBody is a middleware that reads the request body and stores it in the
+// echo context so that the handler can access the raw bytes for signature
+// verification (required by Stripe webhooks). It replaces the body so
+// downstream code can still read it if needed.
+func saveRawBody() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			body, err := io.ReadAll(c.Request().Body)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "failed to read request body")
+			}
+			c.Set("raw_body", body)
+			// Reset the body so it can still be read by other middleware/handler
+			c.Request().Body = io.NopCloser(bytes.NewReader(body))
+			return next(c)
+		}
+	}
 }

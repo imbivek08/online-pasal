@@ -41,6 +41,7 @@ type Order struct {
 	Total             float64       `json:"total" db:"total"`
 	PaymentMethod     *string       `json:"payment_method,omitempty" db:"payment_method"`
 	PaymentStatus     PaymentStatus `json:"payment_status" db:"payment_status"`
+	StripeSessionID   *string       `json:"stripe_session_id,omitempty" db:"stripe_session_id"`
 	Notes             *string       `json:"notes,omitempty" db:"notes"`
 	CreatedAt         time.Time     `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time     `json:"updated_at" db:"updated_at"`
@@ -156,6 +157,20 @@ type OrderSummary struct {
 	ItemCount   int         `json:"item_count"`
 	Total       float64     `json:"total"`
 	CreatedAt   time.Time   `json:"created_at"`
+}
+
+// StripeSessionStatus represents status info from a Stripe checkout session
+type StripeSessionStatus struct {
+	SessionID     string    `json:"session_id"`
+	PaymentStatus string    `json:"payment_status"`
+	OrderID       uuid.UUID `json:"order_id"`
+	OrderNumber   string    `json:"order_number"`
+}
+
+// CreateCheckoutResponse is returned when a Stripe checkout order is created
+type CreateCheckoutResponse struct {
+	Order       *OrderResponse `json:"order"`
+	CheckoutURL string         `json:"checkout_url,omitempty"`
 }
 
 // GenerateOrderNumber generates a unique order number

@@ -23,6 +23,11 @@ type Config struct {
 	ClerkSecretKey      string
 	ClerkPublishableKey string
 	ClerkWebhookSecret  string
+
+	// Stripe configuration
+	StripeSecretKey     string
+	StripeWebhookSecret string
+	FrontendURL         string
 }
 
 func (s *Config) LoadEnv() (*Config, error) {
@@ -34,6 +39,11 @@ func (s *Config) LoadEnv() (*Config, error) {
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080" // default port
+	}
+
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
 	}
 
 	return &Config{
@@ -49,6 +59,9 @@ func (s *Config) LoadEnv() (*Config, error) {
 		ClerkSecretKey:      os.Getenv("CLERK_SECRET_KEY"),
 		ClerkPublishableKey: os.Getenv("CLERK_PUBLISHABLE_KEY"),
 		ClerkWebhookSecret:  os.Getenv("CLERK_WEBHOOK_SECRET"),
+		StripeSecretKey:     os.Getenv("STRIPE_SECRET_KEY"),
+		StripeWebhookSecret: os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		FrontendURL:         frontendURL,
 	}, nil
 }
 

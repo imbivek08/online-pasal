@@ -200,6 +200,18 @@ export interface CreateOrderRequest {
   notes?: string;
 }
 
+export interface StripeCheckoutResponse {
+  order: Order;
+  checkout_url: string;
+}
+
+export interface StripeSessionStatus {
+  session_id: string;
+  payment_status: string;
+  order_id: string;
+  order_number: string;
+}
+
 export interface UpdateOrderStatusRequest {
   status: string;
 }
@@ -440,6 +452,18 @@ class ApiClient {
     return this.request(`/api/v1/orders/${orderId}/cancel`, {
       method: 'POST',
     });
+  }
+
+  // Stripe checkout
+  async createStripeCheckout(data: CreateOrderRequest): Promise<ApiResponse<StripeCheckoutResponse>> {
+    return this.request('/api/v1/orders/checkout/stripe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async verifyStripeSession(sessionId: string): Promise<ApiResponse<StripeSessionStatus>> {
+    return this.request(`/api/v1/orders/checkout/verify?session_id=${encodeURIComponent(sessionId)}`);
   }
 
   async getVendorOrders(): Promise<ApiResponse<Order[]>> {

@@ -153,20 +153,22 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 	orderStatus := model.OrderStatusConfirmed
 	paymentStatus := model.PaymentStatusPending
 
-	// For online payments (eSewa, Khalti), verify payment first
-	// In production, you would integrate with payment gateway here
-	if req.PaymentMethod == "eSewa" || req.PaymentMethod == "Khalti" {
-		// TODO: Integrate with payment gateway API
-		// For now, we'll treat it as pending until payment webhook confirms
-		// When payment is confirmed, update payment_status to 'paid'
+	// For Stripe payments, order stays pending until payment is confirmed via webhook
+	if req.PaymentMethod == "stripe" {
+		orderStatus = model.OrderStatusPending
 		paymentStatus = model.PaymentStatusPending
 	} else if req.PaymentMethod == "COD" {
 		// COD orders are confirmed immediately, payment will be collected on delivery
 		paymentStatus = model.PaymentStatusPending
 	}
 
-	// Create order - automatically confirmed (no manual vendor approval needed)
+	// Create order
 	now := time.Now()
+	var confirmedAt *time.Time
+	if orderStatus == model.OrderStatusConfirmed {
+		confirmedAt = &now // Only auto-confirm for COD
+	}
+
 	order := &model.Order{
 		ID:                uuid.New(),
 		UserID:            userID,
@@ -184,7 +186,7 @@ func (s *OrderService) CreateOrderFromCart(ctx context.Context, userID uuid.UUID
 		Notes:             req.Notes,
 		CreatedAt:         now,
 		UpdatedAt:         now,
-		ConfirmedAt:       &now, // Order is auto-confirmed
+		ConfirmedAt:       confirmedAt,
 	}
 
 	if err := s.orderRepo.Create(ctx, order); err != nil {

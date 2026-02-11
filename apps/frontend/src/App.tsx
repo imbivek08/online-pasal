@@ -17,6 +17,8 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import VendorOrdersPage from './pages/VendorOrdersPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import AddressesPage from './pages/AddressesPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentCancelPage from './pages/PaymentCancelPage';
 
 function App() {
   return (
@@ -139,6 +141,34 @@ function App() {
               <>
                 <SignedIn>
                   <VendorOrdersPage />
+                </SignedIn>
+                <SignedOut>
+                  <Navigate to="/sign-in" replace />
+                </SignedOut>
+              </>
+            }
+          />
+
+          {/* Payment result pages */}
+          <Route
+            path="/payment/success"
+            element={
+              <>
+                <SignedIn>
+                  <PaymentSuccessPage />
+                </SignedIn>
+                <SignedOut>
+                  <Navigate to="/sign-in" replace />
+                </SignedOut>
+              </>
+            }
+          />
+          <Route
+            path="/payment/cancel"
+            element={
+              <>
+                <SignedIn>
+                  <PaymentCancelPage />
                 </SignedIn>
                 <SignedOut>
                   <Navigate to="/sign-in" replace />

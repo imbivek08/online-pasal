@@ -393,6 +393,56 @@ func (r *OrderRepository) GetAddressByID(ctx context.Context, addressID uuid.UUI
 	return &address, err
 }
 
+// UpdateStripeSessionID saves the Stripe checkout session ID on the order
+func (r *OrderRepository) UpdateStripeSessionID(ctx context.Context, orderID uuid.UUID, sessionID string) error {
+	query := `UPDATE orders SET stripe_session_id = $1, updated_at = NOW() WHERE id = $2`
+	result, err := r.db.Pool.Exec(ctx, query, sessionID, orderID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("order not found")
+	}
+	return nil
+}
+
+// GetByStripeSessionID retrieves order by Stripe session ID
+func (r *OrderRepository) GetByStripeSessionID(ctx context.Context, sessionID string) (*model.Order, error) {
+	var order model.Order
+	query := `
+		SELECT id, user_id, order_number, status, shipping_address_id, billing_address_id,
+		       subtotal, shipping_cost, tax, discount, total, payment_method, payment_status,
+		       stripe_session_id, notes, created_at, updated_at, confirmed_at, shipped_at, delivered_at
+		FROM orders
+		WHERE stripe_session_id = $1
+	`
+
+	err := r.db.Pool.QueryRow(ctx, query, sessionID).Scan(
+		&order.ID,
+		&order.UserID,
+		&order.OrderNumber,
+		&order.Status,
+		&order.ShippingAddressID,
+		&order.BillingAddressID,
+		&order.Subtotal,
+		&order.ShippingCost,
+		&order.Tax,
+		&order.Discount,
+		&order.Total,
+		&order.PaymentMethod,
+		&order.PaymentStatus,
+		&order.StripeSessionID,
+		&order.Notes,
+		&order.CreatedAt,
+		&order.UpdatedAt,
+		&order.ConfirmedAt,
+		&order.ShippedAt,
+		&order.DeliveredAt,
+	)
+
+	return &order, err
+}
+
 // VerifyOrderOwnership checks if order belongs to user
 func (r *OrderRepository) VerifyOrderOwnership(ctx context.Context, orderID, userID uuid.UUID) (bool, error) {
 	var exists bool

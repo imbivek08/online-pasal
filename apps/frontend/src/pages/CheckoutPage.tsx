@@ -33,7 +33,7 @@ export default function CheckoutPage() {
   const [formAddress, setFormAddress] = useState<AddressInput>(emptyAddress);
 
   // Payment & notes
-  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
+  const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [useSameAddress, setUseSameAddress] = useState(true);
   const [notes, setNotes] = useState('');
 
@@ -130,11 +130,21 @@ export default function CheckoutPage() {
         orderPayload.shipping_address = formAddress;
       }
 
-      const response = await api.createOrder(orderPayload);
-
-      if (response.success && response.data) {
-        toast.success(`Order placed successfully! Order #${response.data.order_number}`);
-        navigate(`/orders/${response.data.id}`);
+      if (paymentMethod === 'stripe') {
+        // Stripe flow: create checkout session and redirect
+        const response = await api.createStripeCheckout(orderPayload);
+        if (response.success && response.data?.checkout_url) {
+          // Redirect to Stripe Checkout
+          window.location.href = response.data.checkout_url;
+          return;
+        }
+      } else {
+        // COD flow: create order directly
+        const response = await api.createOrder(orderPayload);
+        if (response.success && response.data) {
+          toast.success(`Order placed successfully! Order #${response.data.order_number}`);
+          navigate(`/orders/${response.data.id}`);
+        }
       }
     } catch (error: any) {
       console.error('Failed to create order:', error);
@@ -362,34 +372,29 @@ export default function CheckoutPage() {
                     <input
                       type="radio"
                       name="payment"
+                      value="stripe"
+                      checked={paymentMethod === 'stripe'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <div className="ml-3">
+                      <span className="font-medium">Pay with Card</span>
+                      <p className="text-sm text-gray-500">Secure payment via Stripe (Visa, Mastercard, etc.)</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="payment"
                       value="cash_on_delivery"
                       checked={paymentMethod === 'cash_on_delivery'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-4 h-4 text-green-600"
                     />
-                    <span className="ml-3 font-medium">Cash on Delivery</span>
-                  </label>
-                  <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="esewa"
-                      checked={paymentMethod === 'esewa'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="ml-3 font-medium">eSewa</span>
-                  </label>
-                  <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="khalti"
-                      checked={paymentMethod === 'khalti'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="ml-3 font-medium">Khalti</span>
+                    <div className="ml-3">
+                      <span className="font-medium">Cash on Delivery</span>
+                      <p className="text-sm text-gray-500">Pay when your order is delivered</p>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -453,7 +458,11 @@ export default function CheckoutPage() {
                   disabled={loading}
                   className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
                 >
-                  {loading ? 'Placing Order...' : 'Place Order'}
+                  {loading
+                    ? 'Processing...'
+                    : paymentMethod === 'stripe'
+                      ? 'Pay with Card'
+                      : 'Place Order'}
                 </button>
 
                 <button
